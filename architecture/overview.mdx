@@ -1,0 +1,114 @@
+---
+title: "Space Mission Architecture: How the SPA Is Structured"
+sidebarTitle: "Overview"
+description: "Space Mission is a single-page React application built with Vite. Learn how the component tree, routing, animation pipeline, and static deployment strategy fit together."
+---
+
+Space Mission is a **single-page application (SPA)** built with React 18 and bundled by Vite. The entire portfolio lives inside one HTML entry point (`index.html`). React Router v6 handles all navigation client-side, Framer Motion drives every animated element, and Tailwind CSS supplies the utility-first styling layer — all without a backend, a database, or an API call in sight.
+
+## Component Tree
+
+The application mounts from a single `<div id="root">` and branches through a small, intentional hierarchy:
+
+```
+App (HashRouter via React Router v6)
+├── <Starfield />          — fixed parallax star background (three motion layers)
+├── <Navigation />         — fixed top HUD bar with AnimatePresence active indicator
+└── <Routes> (AnimatePresence mode="wait")
+    ├── /            → <Home />          (SYS_CORE — OrbitSystem planet menu)
+    ├── /about       → <About />         (ORIGIN — scroll-driven career journey)
+    ├── /projects    → <Projects />      (STAR_MAP — draggable canvas map)
+    ├── /skills      → <Skills />        (CONSTELLATIONS — interactive skill graph)
+    ├── /work        → <Work />          (LOGS — vertical mission timeline)
+    ├── /case-studies→ <CaseStudies />   (ARCHIVE — case study grid)
+    ├── /case-studies/:slug → <CaseStudyDetail />
+    ├── /blog        → <Blog />          (TRANSMISSIONS — post list)
+    ├── /blog/:slug  → <BlogDetail />
+    ├── /testimonials→ <Testimonials />  (SIGNALS — floating testimonial cards)
+    └── /contact     → <Contact />       (COMMS — contact form)
+
+Every page component is wrapped in <PageTransition /> (Framer Motion)
+```
+
+Each page component is wrapped in `<PageTransition>`, which applies a consistent Framer Motion `initial → animate → exit` lifecycle to the whole page surface.
+
+---
+
+## Key Architectural Decisions
+
+### Hash-Based Routing for GitHub Pages
+
+Space Mission is deployed as a **static site on GitHub Pages**, which cannot handle server-side URL rewrites. React Router v6 is configured to use **hash-based history** (`/#/about`, `/#/projects`, etc.). When the browser navigates, the hash fragment changes without sending a request to the server, keeping the SPA intact on a CDN-style host.
+
+Additionally, each route has a dedicated static HTML shell in `pages/` (e.g., `pages/About.html`) that sets `window.__STATIC_PAGE_ROUTE__` and forces the hash to the correct route. This means a user who bookmarks `pages/About.html` directly still lands on the right page.
+
+### Framer Motion for All Animations
+
+Rather than mixing CSS transitions, keyframe animations, and a JS animation library, Space Mission commits entirely to **Framer Motion**. This single-library approach enables:
+
+- **Page transitions** via `AnimatePresence` + `motion.div` with `initial`, `animate`, and `exit` props.
+- **Scroll-driven parallax** on the About page using `useScroll` + `useTransform` to map `scrollYProgress` to position, opacity, and scale values.
+- **Spring physics** for the navigation active indicator (`layoutId="nav-active"`) and the project detail panel slide-in.
+- **Entrance animations** using `whileInView` + `viewport={{ once: true }}` so elements animate in once as they scroll into the viewport.
+
+### Tailwind CSS Utility-First Styling
+
+All styling is applied through **Tailwind CSS utility classes** directly on JSX elements — no component-level CSS modules, no styled-components. Custom design tokens (`bg-space-navy`, `text-space-turquoise`, `text-space-white`) are defined in the Tailwind config. A custom `.hud-border` utility class applies the HUD-style border treatment used on cards and panels throughout the UI.
+
+### All Data as Inline JavaScript Arrays
+
+Space Mission has **no backend and no external data fetching**. Every piece of content — projects, work history, skills, blog posts, case studies, and testimonials — is defined as a plain JavaScript array in `assets/main.js`. Components read from these arrays at render time. To update content, you edit the source arrays and rebuild.
+
+---
+
+## Build Output
+
+Vite compiles the project into a `dist/`-style structure that is also the repo root for GitHub Pages:
+
+```
+space-mission/
+├── index.html              # Root SPA entry point
+├── assets/
+│   ├── main.js             # Bundled application code + all inline data arrays
+│   ├── main.css            # Compiled Tailwind output
+│   ├── proxy.js            # Re-exported React + Framer Motion
+│   └── index.js            # Re-exported React Router v6
+├── components/
+│   ├── Navigation.js       # Fixed HUD navigation bar
+│   ├── PageTransition.js   # Framer Motion page wrapper
+│   ├── Starfield.js        # Three-layer parallax star background
+│   └── OrbitSystem.js      # Home page solar system with planet links
+└── pages/
+    ├── About.html          # Static shell → sets window.__STATIC_PAGE_ROUTE__ = "/about"
+    ├── Blog.html
+    ├── BlogDetail.html
+    ├── CaseStudies.html
+    ├── CaseStudyDetail.html
+    ├── Contact.html
+    ├── Projects.html
+    ├── Skills.html
+    ├── Testimonials.html
+    └── Work.html
+```
+
+The `.nojekyll` file at the repo root tells GitHub Pages to skip Jekyll processing and serve the files as-is.
+
+---
+
+## Data Flow
+
+Because there is no backend, data flow is entirely one-directional and synchronous:
+
+```
+Inline JS arrays (assets/main.js)
+        ↓
+Page component reads array at render time
+        ↓
+JSX renders static content
+        ↓
+Framer Motion handles visual transitions
+        ↓
+Browser paints the result
+```
+
+No `useEffect` data fetches, no loading spinners waiting on network responses, no global state management library. The only stateful concerns are UI state (e.g., which project detail panel is open, current scroll progress) handled locally with `useState` and `useRef` inside individual page components.

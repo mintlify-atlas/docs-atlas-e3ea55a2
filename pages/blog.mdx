@@ -1,0 +1,183 @@
+---
+title: "Blog (TRANSMISSIONS): Technical Posts as Interstellar Signals"
+sidebarTitle: "Blog"
+description: "The blog page lists technical articles styled as interstellar transmissions, each with a signal-strength indicator, category icon, date, title, and excerpt. Posts link to full detail pages."
+---
+
+The **Blog** page — labelled `TRANSMISSIONS` inside the HUD — presents technical writing as incoming signals from deep space. Each post card simulates a radio transmission: a signal-strength meter pulses on the left, a category icon identifies the discipline, and the title and excerpt appear as decoded message content. The metaphor extends to dates expressed as Stardates, reinforcing the portfolio's immersive space-mission theme. Posts link through to full-length article detail pages at `/blog/:slug`.
+
+## List Layout
+
+The blog archive renders as a stacked list of wide cards. Each card is split into two columns:
+
+- **Left metadata column** — transmission date (Stardate), category icon, and the animated signal-strength indicator
+- **Right content column** — post title and excerpt
+
+Clicking anywhere on a card navigates to the detail route `/blog/:slug`, where `:slug` is the post's `slug` field.
+
+```
+/blog           → transmission list (all posts)
+/blog/:slug     → full article detail page
+```
+
+## Signal Strength Indicator
+
+The signal meter is a row of **seven vertical bars** that animate independently to simulate a live radio signal. Each bar's height oscillates between `20%` and `100%` using a Framer Motion `animate` sequence, with staggered delays so the bars pulse out of phase with one another. The `signal` field (range **1–5**) controls how many bars are lit in the "active" colour versus the dimmed inactive colour — a post with `signal: 5` has all bars fully active, while `signal: 3` has three active and four dimmed.
+
+```jsx
+// Simplified signal bar rendering
+{Array.from({ length: 7 }).map((_, i) => (
+  <motion.div
+    key={i}
+    className={i < signal ? 'bg-cyan-400' : 'bg-slate-700'}
+    animate={{ height: ['20%', '100%', '20%'] }}
+    transition={{
+      duration: 1.2,
+      repeat: Infinity,
+      delay: i * 0.15,
+      ease: 'easeInOut',
+    }}
+  />
+))}
+```
+
+## Category Icons
+
+Post categories are mapped to Lucide React icons imported under their minified bundle names:
+
+| Category | Lucide Icon | Bundle alias | Represents |
+|---|---|---|---|
+| `architecture` | `LayoutPanelLeft` | `Ot` | Panel/layout structure |
+| `engineering` | `Activity` | `$` | Activity/signal waveform |
+| `performance` | `Database` | `vt` | Data storage / efficiency |
+
+<Note>
+  The bundle aliases (`Ot`, `$`, `vt`) are artefacts of Vite's production minification — they are not meaningful names. The source category strings (`'architecture'`, `'engineering'`, `'performance'`) are the stable identifiers to use when adding new posts.
+</Note>
+
+## Current Blog Posts
+
+The following four transmissions are defined in the posts array at the top of the `Blog` page component:
+
+| ID | Title | Slug | Date | Category | Signal |
+|---|---|---|---|---|---|
+| 1 | Escaping the Gravity Well of State Management | `gravity-well-state` | Stardate 2024.3 | architecture | 5 |
+| 2 | The Event Horizon: When Callbacks Collapse | `event-horizon-callbacks` | Stardate 2024.1 | engineering | 4 |
+| 3 | Dark Matter: The Hidden Cost of Bundle Size | `dark-matter-bundle` | Stardate 2023.9 | performance | 3 |
+| 4 | Stellar Cartography: Mapping Your Component Architecture | `stellar-cartography` | Stardate 2023.6 | architecture | 5 |
+
+### Post Excerpts
+
+- **Gravity Well of State Management** — "How atomic state patterns helped us shed the weight of centralized stores and achieve escape velocity."
+- **Event Horizon: When Callbacks Collapse** — "A deep dive into callback hell and the gravitational pull of promise chains and async/await."
+- **Dark Matter: The Hidden Cost of Bundle Size** — "Invisible mass in your JavaScript bundle is slowing your users down. Here is how to find it and expel it."
+- **Stellar Cartography: Mapping Your Component Architecture** — "Techniques for charting a course through complex component hierarchies without getting lost in the void."
+
+## Blog Detail Page (`/blog/:slug`)
+
+The detail page at `/blog/:slug` renders the full article content. It retrieves the current post by matching `params.slug` (from React Router's `useParams`) against the `slug` field in the data array. Key UI features on the detail page include:
+
+- **Scroll-progress bar** — a thin cyan bar pinned to the top of the viewport that grows from `0%` to `100%` width as the reader scrolls through the article body
+- **Prose article** — the full post content rendered with standard heading hierarchy and readable line-length constraints
+- **Fixed reading-progress indicator** — displays the percentage read in a small HUD label in the corner of the screen
+
+```jsx
+// Slug resolution in BlogDetail
+import { useParams } from 'react-router-dom';
+
+const { slug } = useParams<{ slug: string }>();
+const post = blogPosts.find((p) => p.slug === slug);
+```
+
+<Note>
+  If `slug` does not match any entry, the detail page renders a "SIGNAL LOST" fallback state. This prevents an unhandled crash when a user navigates to a non-existent post URL.
+</Note>
+
+## Data Shape
+
+Each blog post conforms to the following TypeScript interface:
+
+```typescript
+interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  date: string;      // e.g. 'Stardate 2024.3'
+  category: string;  // 'architecture' | 'engineering' | 'performance'
+  signal: number;    // 1–5 signal strength
+  excerpt: string;
+}
+```
+
+The full data array:
+
+```typescript
+const blogPosts: BlogPost[] = [
+  {
+    id: 1,
+    title: 'Escaping the Gravity Well of State Management',
+    slug: 'gravity-well-state',
+    date: 'Stardate 2024.3',
+    category: 'architecture',
+    signal: 5,
+    excerpt:
+      'How atomic state patterns helped us shed the weight of centralized ' +
+      'stores and achieve escape velocity.',
+  },
+  {
+    id: 2,
+    title: 'The Event Horizon: When Callbacks Collapse',
+    slug: 'event-horizon-callbacks',
+    date: 'Stardate 2024.1',
+    category: 'engineering',
+    signal: 4,
+    excerpt:
+      'A deep dive into callback hell and the gravitational pull of ' +
+      'promise chains and async/await.',
+  },
+  {
+    id: 3,
+    title: 'Dark Matter: The Hidden Cost of Bundle Size',
+    slug: 'dark-matter-bundle',
+    date: 'Stardate 2023.9',
+    category: 'performance',
+    signal: 3,
+    excerpt:
+      'Invisible mass in your JavaScript bundle is slowing your users down. ' +
+      'Here is how to find it and expel it.',
+  },
+  {
+    id: 4,
+    title: 'Stellar Cartography: Mapping Your Component Architecture',
+    slug: 'stellar-cartography',
+    date: 'Stardate 2023.6',
+    category: 'architecture',
+    signal: 5,
+    excerpt:
+      'Techniques for charting a course through complex component hierarchies ' +
+      'without getting lost in the void.',
+  },
+];
+```
+
+## Adding New Blog Posts
+
+To publish a new transmission, append an object to the `blogPosts` array:
+
+```typescript
+{
+  id: 5,
+  title: 'Warp Factor: Parallelising API Requests with Promise.all',
+  slug: 'warp-factor-promise-all',   // Used as the URL segment: /blog/warp-factor-promise-all
+  date: 'Stardate 2024.7',           // Free-form string; follow the Stardate convention
+  category: 'engineering',           // 'architecture' | 'engineering' | 'performance'
+  signal: 4,                         // 1–5; controls how many signal bars are lit
+  excerpt: 'Short teaser sentence shown on the list card.',
+},
+```
+
+<Tip>
+  Keep `slug` values URL-safe (lowercase, hyphens only, no spaces). The detail page navigation is purely slug-based, so the `id` field is used only for React list keys and can be any unique integer.
+</Tip>
+
+To add a full article body to a post, extend the `BlogPost` interface with an optional `body` field and render it in the detail page's prose section. The current implementation uses placeholder prose; swap it out with real markdown or JSX content as needed.

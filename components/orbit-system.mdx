@@ -1,0 +1,152 @@
+---
+title: "OrbitSystem Component: Interactive Home Page Hero"
+sidebarTitle: "OrbitSystem"
+description: "The OrbitSystem component renders an animated interactive orbital diagram on the home page, with clickable planets that reveal information panels — built with SVG and Framer Motion."
+---
+
+The `OrbitSystem` component is the centrepiece hero of the Space Mission home page. It renders a miniature solar-system diagram: a glowing central star (labelled `DEV / SYS_CORE`) surrounded by five planets — one for each major section of the portfolio — orbiting along elliptical paths. Clicking any planet navigates directly to its corresponding route, making the diagram an animated, spatial navigation aid as well as a visual showpiece.
+
+## Layout
+
+The component is rendered inside a fixed-height `600 px` flex container centred on the page:
+
+```jsx
+<div className="relative w-full h-[600px] flex items-center justify-center perspective-1000">
+  {/* central star + orbiting planets */}
+</div>
+```
+
+On the home page it is wrapped in a responsive max-width container to keep it from growing too large on ultra-wide screens:
+
+```jsx
+import { OrbitSystem } from '../components/OrbitSystem';
+
+// Used in the Home page:
+<div className="w-full max-w-5xl mx-auto mb-24">
+  <OrbitSystem />
+</div>
+```
+
+<Note>
+The component is entirely self-contained — it accepts no props. All orbit data, colours, and sizes are defined internally in the `r` (planets) array.
+</Note>
+
+## Central Star
+
+The star is a `motion.div` with a radial gradient from yellow-white to deep red, a `60 px` orange `box-shadow` glow, and a continuous breathing animation that pulses the glow between `60 px` and `80 px` spread:
+
+```jsx
+<motion.div
+  className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-200 via-orange-400 to-red-600
+             shadow-[0_0_60px_rgba(251,146,60,0.6)] flex items-center justify-center"
+  animate={{
+    boxShadow: [
+      '0 0 60px rgba(251,146,60,0.6)',
+      '0 0 80px rgba(251,146,60,0.8)',
+      '0 0 60px rgba(251,146,60,0.6)',
+    ],
+  }}
+  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+>
+  <div className="text-center">
+    <h1 className="font-serif text-2xl font-bold text-white drop-shadow-md">DEV</h1>
+    <p className="font-mono text-[10px] text-white/80">SYS_CORE</p>
+  </div>
+</motion.div>
+```
+
+## Planet Orbits
+
+Each planet in the `r` array has the following shape:
+
+```jsx
+{
+  id:       string,   // unique key, e.g. 'projects'
+  label:    string,   // hover tooltip text
+  path:     string,   // React Router path to navigate to on click
+  radiusX:  number,   // horizontal semi-axis in px
+  radiusY:  number,   // vertical semi-axis in px
+  size:     number,   // planet diameter in px
+  color:    string,   // Tailwind bg-* class
+  duration: number,   // orbit period in seconds
+  delay:    number,   // initial animation offset in seconds
+}
+```
+
+The five planets and their orbital parameters are:
+
+| ID | Label | Path | RadiusX | RadiusY | Colour | Period |
+|---|---|---|---|---|---|---|
+| `about` | `ORIGIN` | `/about` | 120 | 60 | `bg-orange-400` | 20 s |
+| `projects` | `MAP` | `/projects` | 180 | 90 | `bg-space-turquoise` | 35 s |
+| `skills` | `SKILLS` | `/skills` | 240 | 120 | `bg-space-teal` | 45 s |
+| `work` | `LOGS` | `/work` | 320 | 160 | `bg-indigo-400` | 60 s |
+| `contact` | `COMMS` | `/contact` | 400 | 200 | `bg-rose-400` | 80 s |
+
+Each orbit is rendered as a CSS ellipse (a `border border-space-white/10 rounded-full` div) plus a Framer Motion rotating wrapper that carries the planet dot.
+
+## Animation Technique
+
+The continuous orbit is achieved by nesting two `motion.div` elements: the outer one rotates from `0 → 360°` over `duration` seconds; the inner one counter-rotates by the same amount so the planet `div` itself stays upright:
+
+```jsx
+// Outer: rotates the orbit arm
+<motion.div
+  animate={{ rotate: 360 }}
+  transition={{ duration: planet.duration, repeat: Infinity, ease: 'linear', delay: -planet.delay }}
+>
+  {/* Inner: counter-rotates the planet so it stays upright */}
+  <motion.div
+    style={{ x: planet.radiusX, y: 0 }}
+    animate={{ rotate: -360 }}
+    transition={{ duration: planet.duration, repeat: Infinity, ease: 'linear', delay: -planet.delay }}
+    onClick={() => navigate(planet.path)}
+    whileHover={{ scale: 1.5 }}
+  >
+    <div className={`rounded-full ${planet.color} shadow-[0_0_15px_currentColor]`}
+         style={{ width: planet.size, height: planet.size }} />
+    {/* Hover tooltip */}
+  </motion.div>
+</motion.div>
+```
+
+Using `delay: -planet.delay` (a negative value) starts the animation part-way through its cycle, so the planets are staggered across the orbit rather than all beginning at the three-o'clock position.
+
+## Interaction
+
+Hovering a planet scales it to `1.5×` via `whileHover={{ scale: 1.5 }}`. A HUD-style tooltip with `class="hud-border"` appears via CSS `opacity-0 group-hover:opacity-100 transition-opacity` — no JavaScript state is involved. Clicking a planet calls `useNavigate()(planet.path)`, navigating to the route associated with that orbital body.
+
+```jsx
+import { useNavigate } from 'react-router-dom';
+
+const navigate = useNavigate();
+
+// On each planet:
+onClick={() => navigate(planet.path)}
+```
+
+## Customization
+
+**Adding a planet.** Append a new entry to the `r` array in `OrbitSystem.js`. Choose a `radiusX` / `radiusY` larger than the outermost existing orbit (400 / 200) to avoid overlap, and pick a `duration` longer than 80 s:
+
+```jsx
+{
+  id: 'blog',
+  label: 'TRANSMISSIONS',
+  path: '/blog',
+  radiusX: 480,
+  radiusY: 240,
+  size: 10,
+  color: 'bg-purple-400',
+  duration: 100,
+  delay: 45,
+}
+```
+
+**Changing orbit speed.** Increase `duration` for a slower orbit, decrease it for a faster one. Very short durations (< 5 s) can feel disorienting.
+
+**Changing colours.** Replace the Tailwind `color` class with any `bg-*` token defined in your Tailwind config. The `box-shadow` uses `currentColor`, so the glow automatically matches the planet's background.
+
+<Tip>
+The `OrbitSystem` uses `useNavigate` from React Router, so it must be rendered inside a `<BrowserRouter>` (or equivalent) context. It is only used on the home page, which is always within the router.
+</Tip>

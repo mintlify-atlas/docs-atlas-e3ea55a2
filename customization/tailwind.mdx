@@ -1,0 +1,157 @@
+---
+title: "Tailwind CSS Configuration in Space Mission"
+sidebarTitle: "Tailwind Config"
+description: "Space Mission extends Tailwind CSS with custom color tokens, font families, and a custom animate-ping-slow animation. Learn the full config and how to add your own utilities."
+---
+
+Space Mission is styled with **Tailwind CSS v3**, using a utility-first approach where almost every visual property — color, spacing, typography, animation — is expressed directly in JSX class names rather than in bespoke stylesheets. The project's design language is encoded in a `tailwind.config.js` file that extends Tailwind's default theme with custom color tokens, font families, and a single custom animation. Everything else — the `.hud-border` component class, global base styles, and the Google Fonts import — lives in `assets/main.css` using Tailwind's `@layer` directives.
+
+## Custom Color Tokens
+
+Five `space-*` color tokens are added to the theme via `theme.extend.colors`. Placing them in `extend` rather than replacing the top-level `colors` key means all of Tailwind's built-in palette (slate, indigo, rose, etc.) remains available alongside them.
+
+| Token | Hex | Description |
+|---|---|---|
+| `space-navy` | `#020617` | Near-black primary background |
+| `space-turquoise` | `#22d3ee` | Electric cyan primary accent |
+| `space-teal` | `#14b8a6` | Muted teal secondary accent |
+| `space-white` | `#f1f5f9` | Slate-white for body text |
+| `space-violet` | `#7c3aed` | Deep violet for backend / Void Explorer accents |
+
+Because these are standard Tailwind color extensions, you get the full suite of generated utilities for free: background (`bg-space-navy`), text (`text-space-turquoise`), border (`border-space-teal`), and all opacity variants (`bg-space-navy/80`, `border-space-turquoise/30`, etc.).
+
+## Custom Font Families
+
+Three font families override Tailwind's default `mono`, `sans`, and `serif` stacks:
+
+```js
+fontFamily: {
+  mono:  ['Space Mono', 'monospace'],
+  serif: ['Fraunces',   'serif'],
+  sans:  ['Inter',      'sans-serif'],
+},
+```
+
+This means:
+- **`font-mono`** → `Space Mono, monospace` — used for nav labels, form labels, HUD status text, and `<code>` elements.
+- **`font-serif`** → `Fraunces, serif` — applied globally to all `h1`–`h6` headings via a base layer rule.
+- **`font-sans`** → `Inter, sans-serif` — set on `<html>` by Tailwind's preflight, making it the default for all body text.
+
+## Custom Animation: `animate-ping-slow`
+
+The `animate-ping-slow` utility drives the slow-pulsing glow rings used on status indicators and decorative orbital elements. It reuses Tailwind's built-in `@keyframes ping` (scale up and fade out) but stretches the duration from the default 1 s to 3 s and uses a `cubic-bezier(0, 0, 0.2, 1)` easing for a more languid, atmospheric feel.
+
+The keyframe definition compiled into `assets/main.css`:
+
+```css
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+```
+
+Usage in JSX:
+
+```tsx
+<span className="absolute inline-flex h-full w-full rounded-full bg-space-turquoise opacity-30 animate-ping-slow" />
+```
+
+## The `.hud-border` Component Class
+
+`.hud-border` is defined in `assets/main.css` inside a `@layer components` block, which means it can be overridden by Tailwind's utility layer when needed. It bundles the four properties that make up the frosted-glass panel aesthetic used across cards and overlays:
+
+```css
+@layer components {
+  .hud-border {
+    border-width: 1px;
+    border-color: #22d3ee4d;               /* space-turquoise/30 */
+    background-color: #020617cc;           /* space-navy/80      */
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+    backdrop-filter: blur(12px);
+  }
+}
+```
+
+Because it lives in `@layer components`, you can override any individual property with a utility class placed after it in the HTML — for example, `hud-border bg-space-navy/95` will increase the panel opacity without touching the rest of the definition.
+
+## Full Inferred Config
+
+The following `tailwind.config.js` represents the complete configuration inferred from the compiled `assets/main.css` output:
+
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        'space-navy':      '#020617',
+        'space-turquoise': '#22d3ee',
+        'space-teal':      '#14b8a6',
+        'space-white':     '#f1f5f9',
+        'space-violet':    '#7c3aed',
+      },
+      fontFamily: {
+        mono:  ['Space Mono', 'monospace'],
+        serif: ['Fraunces',   'serif'],
+        sans:  ['Inter',      'sans-serif'],
+      },
+      animation: {
+        'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+      },
+    },
+  },
+  plugins: [],
+};
+```
+
+## Adding a New Color Token
+
+To introduce a new color — say an amber accent for a new section — add it to the `colors.extend` block and rebuild:
+
+```js
+// tailwind.config.js
+colors: {
+  'space-navy':      '#020617',
+  'space-turquoise': '#22d3ee',
+  'space-teal':      '#14b8a6',
+  'space-white':     '#f1f5f9',
+  'space-violet':    '#7c3aed',
+  'space-amber':     '#f59e0b', // ← new token
+},
+```
+
+After running `npm run build`, you can use `bg-space-amber`, `text-space-amber`, `border-space-amber/50`, and every other variant just like the built-in tokens.
+
+## Adding a New Animation
+
+To add a second slow animation — for example a gentle floating bob — extend the `animation` and `keyframes` keys together:
+
+```js
+theme: {
+  extend: {
+    keyframes: {
+      float: {
+        '0%, 100%': { transform: 'translateY(0px)' },
+        '50%':      { transform: 'translateY(-10px)' },
+      },
+    },
+    animation: {
+      'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+      'float':     'float 4s ease-in-out infinite',
+    },
+  },
+},
+```
+
+Then use `animate-float` in your JSX.
+
+<Note>
+  Tailwind's content scanner detects class names by scanning source files as plain text. It will **not** find class names assembled from string concatenation at runtime — for example, `` `bg-space-${color}` `` will never generate the corresponding CSS. Always write complete class names like `bg-space-turquoise` or `bg-space-teal` directly in your JSX, and run `npm run build` to regenerate `assets/main.css` after any change to the config or source files.
+</Note>

@@ -1,0 +1,361 @@
+---
+title: "Personalizing Space Mission: Editing Content Data Arrays"
+sidebarTitle: "Content Data"
+description: "All portfolio content in Space Mission — projects, skills, work history, case studies, blog posts, and testimonials — lives in plain JavaScript arrays. Learn how to edit each one."
+---
+
+All of Space Mission's portfolio content is defined as plain TypeScript/JavaScript arrays inside the source files. There is no CMS, no database, and no external API — every project card, skill node, work history entry, and testimonial is a literal object in the source code. When you run `npm run build`, Vite compiles those arrays into `assets/main.js`, which is what the deployed site actually serves. To change any content, you edit the source TypeScript files and rebuild.
+
+<Note>
+  The GitHub Pages deployment in this repository contains **pre-built output** — `index.html`, `assets/`, `components/`, and `pages/`. Content changes must be made in the original TypeScript source files and rebuilt with `npm run build` before committing the new `dist/` output.
+</Note>
+
+---
+
+## Mission Briefing
+
+The home page opens with a "Mission Briefing" terminal block that types out four lines one after another using a `TypewriterText` component. Each line has its own `text` string and a `delay` in milliseconds controlling when it starts animating.
+
+The four lines currently configured are:
+
+```
+> INITIALIZING TELEMETRY... SUCCESS.
+> SUBJECT: Senior Software Engineer / Navigator of Code.
+> STATUS: All systems nominal. Caffeine levels stable. Currently orbiting the React/TypeScript sector with occasional deep-space probes into backend nebulae.
+> DIRECTIVE: Explore the star map above to access mission logs, orbital parameters, and archived transmissions.
+```
+
+In the source file, each line is rendered as a `<TypewriterText>` element:
+
+```tsx
+<p><TypewriterText text="> INITIALIZING TELEMETRY... SUCCESS." delay={500} /></p>
+<p><TypewriterText text="> SUBJECT: Senior Software Engineer / Navigator of Code." delay={1500} /></p>
+<p><TypewriterText text="> STATUS: All systems nominal. ..." delay={3000} /></p>
+<p><TypewriterText text="> DIRECTIVE: Explore the star map above ..." delay={7000} /></p>
+```
+
+To change the briefing text, replace the `text` prop value. To adjust the timing, update the `delay` value (in milliseconds). The third and fourth lines have longer delays to let the earlier lines finish typing first — keep that stagger in mind when adding or reordering lines.
+
+---
+
+## Projects (Star Map)
+
+The **Projects** page renders a draggable, zoomable star map. Each project is a glowing circle positioned absolutely on a `200vw × 200vh` canvas using percentage coordinates. Clicking a circle opens a slide-in panel with the project details.
+
+### Data shape
+
+```typescript
+interface Project {
+  id: string;       // Unique identifier string
+  name: string;     // Display name shown below the circle
+  type: string;     // Category label (e.g. "Design System", "Dashboard")
+  x: number;        // Horizontal position, 0–100 (percentage of canvas width)
+  y: number;        // Vertical position, 0–100 (percentage of canvas height)
+  size: number;     // Circle diameter in pixels (30–60 recommended)
+  color: string;    // Hex color for the glow and fill (e.g. "#22d3ee")
+  desc: string;     // Short description shown in the detail panel
+  stack: string[];  // Array of technology names displayed as tags
+}
+```
+
+### Current projects
+
+| Name | Type | Color |
+|------|------|-------|
+| Nebula UI | Design System | `#22d3ee` |
+| Quasar Analytics | Dashboard | `#14b8a6` |
+| Pulsar API | Backend Service | `#7c3aed` |
+| Void Explorer | Web3 App | `#f43f5e` |
+| Comms Relay | Chat App | `#eab308` |
+
+### Adding a project
+
+Append a new object to the projects array in the source file:
+
+```typescript
+{
+  id: "6",
+  name: "Gravity Well",
+  type: "Mobile App",
+  x: 55,
+  y: 45,
+  size: 45,
+  color: "#a855f7",
+  desc: "A cross-platform fitness tracker that treats rest days as orbital decay.",
+  stack: ["React Native", "Expo", "Supabase"],
+},
+```
+
+<Tip>
+  Keep `x` and `y` values spread across the full 0–100 range so the star map isn't cluttered. Projects that are too close together will overlap their label text. Aim for at least 15–20 units of separation between any two projects' coordinates.
+</Tip>
+
+---
+
+## Skills (Constellations)
+
+The **Skills** page renders a starfield overlay where each skill group forms a named constellation. Nodes are positioned as percentage values on the viewport, connected by animated SVG lines. Hovering a node highlights its constellation and shows experience in years.
+
+### Data shape
+
+```typescript
+interface SkillNode {
+  id: string;     // Unique ID used to reference this node in connections
+  label: string;  // Skill name displayed below the node
+  x: number;      // Horizontal position, 0–100 (viewport percentage)
+  y: number;      // Vertical position, 0–100 (viewport percentage)
+  years: number;  // Years of experience — controls the node's rendered size
+}
+
+interface Constellation {
+  id: string;                    // Unique ID for the constellation
+  name: string;                  // Display name (e.g. "LYRA (Frontend)")
+  color: string;                 // Hex color for nodes and connecting lines
+  nodes: SkillNode[];            // Array of skill nodes
+  connections: [string, string][]; // Pairs of node IDs to connect with lines
+}
+```
+
+### Current constellations
+
+| Constellation | Color | Skills |
+|---|---|---|
+| LYRA (Frontend) | `#22d3ee` | React, TypeScript, Tailwind, Next.js |
+| CYGNUS (Backend) | `#7c3aed` | Node.js, PostgreSQL, Redis, GraphQL |
+| ORION (Tools) | `#14b8a6` | Git, Docker, AWS |
+
+### Adding a skill node to an existing constellation
+
+To add a new node to LYRA, append to its `nodes` array and add a connection:
+
+```typescript
+{
+  id: "frontend",
+  name: "LYRA (Frontend)",
+  color: "#22d3ee",
+  nodes: [
+    { id: "react",   label: "React",      x: 20, y: 30, years: 5 },
+    { id: "ts",      label: "TypeScript", x: 35, y: 20, years: 4 },
+    { id: "tw",      label: "Tailwind",   x: 45, y: 40, years: 3 },
+    { id: "next",    label: "Next.js",    x: 25, y: 50, years: 3 },
+    // New node:
+    { id: "vite",    label: "Vite",       x: 38, y: 55, years: 2 },
+  ],
+  connections: [
+    ["react", "ts"],
+    ["ts", "tw"],
+    ["react", "next"],
+    ["next", "tw"],
+    // Connect to the new node:
+    ["next", "vite"],
+  ],
+},
+```
+
+Node size scales with `years` — a node with `years: 6` renders noticeably larger than one with `years: 1`, giving viewers an at-a-glance sense of depth.
+
+---
+
+## Work History (Mission Logs)
+
+The **Work** page displays a vertical timeline of mission patches — one per role. Each entry has a `status` badge (`ACTIVE` or `COMPLETED`) and a `patchColor` Tailwind class string that tints the border and label text.
+
+### Data shape
+
+```typescript
+interface WorkEntry {
+  id: number;
+  role: string;       // Job title, displayed as the patch heading
+  company: string;    // Employer name
+  stardate: string;   // Date range in free-form text, e.g. "2022.4 - PRESENT"
+  status: "ACTIVE" | "COMPLETED";
+  patchColor: string; // Tailwind class string, e.g. "border-space-turquoise text-space-turquoise"
+  debrief: string;    // Role description / achievements paragraph
+  tech: string[];     // Technologies used, rendered as tags
+}
+```
+
+### Current entries
+
+| Role | Company | Status |
+|------|---------|--------|
+| Senior Navigator (Frontend) | Stellar Tech | `ACTIVE` |
+| Flight Engineer (Fullstack) | Nebula Systems | `COMPLETED` |
+| Cadet Developer | Orbit Media | `COMPLETED` |
+
+### Adding a new entry
+
+```typescript
+{
+  id: 4,
+  role: "Principal Engineer",
+  company: "Horizon Labs",
+  stardate: "2024.1 - PRESENT",
+  status: "ACTIVE",
+  patchColor: "border-purple-400 text-purple-400",
+  debrief:
+    "Spearheading the migration of a decade-old monolith into a distributed micro-frontend architecture. Reduced time-to-deploy from two weeks to under four hours.",
+  tech: ["React", "Module Federation", "Kubernetes", "TypeScript"],
+},
+```
+
+The `patchColor` field accepts any valid Tailwind border + text class pair. The value is applied directly to the patch element, so make sure both classes exist in your Tailwind configuration.
+
+---
+
+## Case Studies (Archive)
+
+The **Case Studies** page lists mission debriefs as clickable cards. Each entry links to a detail page at `/case-studies/:slug`.
+
+### Data shape
+
+```typescript
+interface CaseStudy {
+  id: string;
+  codename: string;   // Internal mission codename
+  client: string;     // Client or project name
+  status: string;     // Mission status label, e.g. "CLASSIFIED", "ARCHIVED"
+  sector: string;     // Industry or domain area
+  summary: string;    // Short description shown on the card
+  outcome: string;    // Key result or metric from the engagement
+  tags: string[];     // Technology / domain tags
+}
+```
+
+### Current entries
+
+| Codename | Slug |
+|----------|------|
+| Project Apollo | `project-apollo` |
+| Data Nebula | `data-nebula` |
+| Shield Generator | `shield-generator` |
+
+### Adding a case study
+
+```typescript
+{
+  id: "cs-004",
+  codename: "Dark Satellite",
+  client: "Meridian Finance",
+  status: "ARCHIVED",
+  sector: "FinTech",
+  summary:
+    "Rebuilt the transaction reporting pipeline to handle 10× peak load without vertical scaling.",
+  outcome: "99.98% uptime maintained through three consecutive quarter-end surges.",
+  tags: ["Node.js", "Kafka", "PostgreSQL", "AWS"],
+},
+```
+
+The slug used in the URL is derived from the `codename` field — use lowercase kebab-case to match the React Router pattern at `/case-studies/:slug`.
+
+---
+
+## Blog Posts (Transmissions)
+
+The **Blog** page lists posts in reverse-chronological order. Each post has a `signal` value (1–5) that renders as a signal-strength bar graphic. Clicking a post navigates to `/blog/:slug`, which loads the static detail view.
+
+### Data shape
+
+```typescript
+interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;     // URL-safe kebab-case identifier — used in the route path
+  date: string;     // Display date string, e.g. "2023.10.15"
+  category: string; // "Paper", "Essay", or "Dispatch" — controls the icon
+  signal: number;   // Signal strength 1–5, rendered as a bar graph
+  excerpt: string;  // One-sentence summary shown on the list page
+}
+```
+
+### Current posts
+
+| Title | Slug | Category | Signal |
+|-------|------|----------|--------|
+| State Management in Zero-G | `state-management-in-zero-g` | Paper | 5 |
+| The Dark Matter of CSS | `the-dark-matter-of-css` | Essay | 4 |
+| Dispatch from the Edge (Computing) | `dispatch-from-the-edge` | Dispatch | 3 |
+
+### Slug naming convention
+
+Slugs must be lowercase, hyphen-separated, and match exactly what the router will receive as `:slug`. A post with `slug: "typescript-generics-deep-dive"` must be navigated to at `/#/blog/typescript-generics-deep-dive`.
+
+### Adding a post
+
+```typescript
+{
+  id: 4,
+  title: "Async/Await at the Speed of Light",
+  slug: "async-await-speed-of-light",
+  date: "2024.03.10",
+  category: "Paper",
+  signal: 4,
+  excerpt:
+    "Why blocking the event loop is the engineering equivalent of parking in a wormhole.",
+},
+```
+
+The three `category` values map to specific Lucide icons in the source: `"Paper"` → `FileText`, `"Essay"` → `MessageSquare`, and `"Dispatch"` → `Radio`. Any other string falls back to `Radio`.
+
+---
+
+## Testimonials (Signals)
+
+The **Testimonials** page floats quote cards at absolute positions on the screen with a slow vertical bobbing animation. Cards are staggered in time using the `delay` field so they don't all bob in sync.
+
+### Data shape
+
+```typescript
+interface Testimonial {
+  id: number;
+  name: string;    // Reviewer's name
+  role: string;    // Title and affiliation, e.g. "Lead Architect @ Skynet"
+  text: string;    // The testimonial body text
+  x: number;       // Horizontal position, 0–100 (viewport percentage)
+  y: number;       // Vertical position, 0–100 (viewport percentage)
+  delay: number;   // Stagger delay in seconds for the bobbing animation
+}
+```
+
+### Current testimonials
+
+| Name | Role | Position (x, y) |
+|------|------|-----------------|
+| Sarah Connor | Lead Architect @ Skynet | 10, 20 |
+| Ellen Ripley | Product Manager @ Weyland | 50, 10 |
+| David Bowman | Mission Commander @ Discovery | 20, 60 |
+| Cooper | Pilot @ Endurance | 60, 50 |
+
+### Adding a testimonial
+
+```typescript
+{
+  id: 5,
+  name: "HAL 9000",
+  role: "Systems Analyst @ Discovery One",
+  text: "I am putting myself to the fullest possible use, which is all I think that any conscious entity can ever hope to do — especially after this engineer refactored my state machine.",
+  x: 75,
+  y: 25,
+  delay: 1.5,
+},
+```
+
+<Tip>
+  Position testimonial cards with `x` and `y` values spread across the viewport so cards don't overlap. Cards are `w-80` (320 px) wide on mobile and `w-96` (384 px) on larger screens — keep at least 30 percentage-point horizontal gaps between cards at similar `y` values to prevent collisions. Also avoid placing cards near `y: 0` or `y: 100` since the header and footer consume that space.
+</Tip>
+
+---
+
+## Rebuilding After Edits
+
+After modifying any data array in the source TypeScript files, run the following to compile the changes and verify the output:
+
+```bash
+# Compile the updated source into dist/
+npm run build
+
+# Preview the built output locally before deploying
+npm run preview
+```
+
+The preview server starts at `http://localhost:4173` by default and serves the exact same static files that GitHub Pages (or any other host) would serve. Use it to confirm that new entries appear correctly before pushing to the deploy branch.

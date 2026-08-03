@@ -1,0 +1,159 @@
+---
+title: "Starfield Component: Animated Full-Viewport Star Background"
+sidebarTitle: "Starfield"
+description: "The Starfield component renders a fixed full-viewport animated background of stars with varying sizes and opacities, sitting behind all page content without intercepting pointer events."
+---
+
+The `Starfield` component paints the deep-space backdrop that persists across every page of Space Mission. It renders three separate layers of CSS `div`-based stars — each layer a randomly seeded scatter of dots — plus animated shooting-star streaks, all inside a `fixed` full-viewport container that lives permanently behind all content. Because it never participates in the page's document flow and never captures input events, it is completely transparent to the rest of the application.
+
+## Positioning
+
+The container is `fixed inset-0` with `z-0` and `pointer-events-none`, so it:
+
+- Stretches to fill the full viewport on every screen size.
+- Does not scroll with page content.
+- Does not block clicks, taps, or hover events on any element above it.
+- Does not interfere with the Navigation bar (`z-50`) or PageTransition content (`z-10`).
+
+```jsx
+<div
+  className="fixed inset-0 z-0 overflow-hidden bg-space-navy pointer-events-none"
+>
+  {/* star layers + nebula blobs */}
+</div>
+```
+
+## Star Layers
+
+Stars are generated as plain `div` elements with `rounded-full` and `bg-white` (or a tinted colour for the second layer). Positions, sizes, and opacities are randomised once on mount using `useState` with an initialiser function so the values are stable across re-renders:
+
+```jsx
+// Simplified star generation
+const generateStars = (count) =>
+  Array.from({ length: count }).map((_, id) => ({
+    id,
+    x: Math.random() * 100,       // vw %
+    y: Math.random() * 100,       // vh %
+    size: Math.random() * 2 + 0.5, // px, range 0.5–2.5
+    opacity: Math.random() * 0.7 + 0.3, // range 0.3–1.0
+  }));
+
+const [layer1] = useState(() => generateStars(100)); // white, subtle
+const [layer2] = useState(() => generateStars(75));  // space-turquoise tint
+const [layer3] = useState(() => generateStars(50));  // white, glowing
+```
+
+The three layers have different counts, colours, and sizes to create an illusion of depth:
+
+| Layer | Count | Colour | Size multiplier | Notes |
+|---|---|---|---|---|
+| 1 | 100 | `white` | `×1.0` | Background layer, low opacity |
+| 2 | 75 | `space-turquoise` | `×1.2` | Mid layer, tinted stars |
+| 3 | 50 | `white` | `×1.5` | Foreground, CSS `box-shadow` glow |
+
+Layer 3 stars have a `box-shadow` glow applied inline:
+
+```jsx
+style={{
+  boxShadow: `0 0 ${star.size * 2}px rgba(255, 255, 255, 0.8)`,
+}}
+```
+
+## Parallax Mouse Tracking
+
+Each layer is wrapped in a Framer Motion `motion.div` that shifts slightly as the mouse moves, giving the field a subtle 3D parallax effect. The cursor position is normalised to `[-1, 1]` and fed into Framer Motion spring `MotionValue`s with a stiffness of `50` and damping of `20` (slow, smooth lag):
+
+```jsx
+import { useMotionValue, useSpring, useTransform } from 'framer-motion';
+
+const mouseX = useMotionValue(0);  // -1 to +1
+const mouseY = useMotionValue(0);
+
+const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
+const springY = useSpring(mouseY, { stiffness: 50, damping: 20 });
+
+// Layer 1 moves ±1%, Layer 2 ±2%, Layer 3 ±4%
+const x1 = useTransform(springX, [-1, 1], ['-1%', '1%']);
+const x3 = useTransform(springX, [-1, 1], ['-4%', '4%']);
+```
+
+Each layer container uses `absolute inset-[-10%] w-[120%] h-[120%]` so that the ±4 % parallax never reveals an empty edge.
+
+## Shooting Stars
+
+Three `motion.div` shooting-star streaks animate on an infinite loop. They are thin `h-[1px]` elements with a `bg-gradient-to-r from-transparent via-white to-transparent` that slide across the viewport at 35 ° rotation:
+
+```jsx
+const ShootingStar = ({ delay }) => (
+  <motion.div
+    className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent w-32"
+    initial={{ x: '-10vw', y: '20vh', rotate: 35, opacity: 0 }}
+    animate={{ x: '110vw', y: '80vh', opacity: [0, 1, 1, 0] }}
+    transition={{
+      duration: 1.5,
+      repeat: Infinity,
+      repeatDelay: delay + Math.random() * 5,
+      ease: 'linear',
+    }}
+  />
+);
+
+// Three instances with staggered base delays
+<ShootingStar delay={2} />
+<ShootingStar delay={7} />
+<ShootingStar delay={15} />
+```
+
+## Nebula Blobs
+
+Two large blurred `div` elements with `mix-blend-screen` sit behind the star layers to add soft ambient glow:
+
+```jsx
+<div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] bg-space-violet/10 rounded-full blur-[120px] mix-blend-screen" />
+<div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] bg-space-teal/5  rounded-full blur-[100px] mix-blend-screen" />
+```
+
+## Usage
+
+`Starfield` is rendered once at the root of the app, outside the router hierarchy, so it persists without remounting during page transitions:
+
+```jsx
+import { Starfield } from '../components/Starfield';
+
+function App() {
+  return (
+    <div className="relative min-h-screen bg-space-navy text-space-white">
+      <Starfield />
+      {/* Navigation, Router, PageTransition all render above z-0 */}
+    </div>
+  );
+}
+```
+
+<Note>
+Because `Starfield` is outside `<BrowserRouter>`, it does not have access to React Router hooks. Do not place any `<Link>` or `useLocation` calls inside it.
+</Note>
+
+## Customization
+
+**Star count.** Change the argument passed to `generateStars(n)` for each layer. Increasing beyond ~150 per layer may affect performance on low-end devices.
+
+**Size range.** Adjust the `Math.random() * 2 + 0.5` expression. The first term is the range spread and the second is the minimum size in pixels.
+
+**Parallax intensity.** Change the translate ranges in `useTransform`:
+
+```jsx
+// Subtle parallax
+const x1 = useTransform(springX, [-1, 1], ['-0.5%', '0.5%']);
+
+// More dramatic depth
+const x3 = useTransform(springX, [-1, 1], ['-8%', '8%']);
+```
+
+**Shooting star frequency.** Lower `repeatDelay` values make streaks appear more often. Setting `delay={0}` on all three instances produces a meteor-shower effect.
+
+**Disable parallax.** Remove the `window.addEventListener('mousemove', ...)` effect and set the layer `style` props to `{ x: 0, y: 0 }`.
+
+<Tip>
+If you need to disable the Starfield on a specific page (for example a high-contrast print view), conditionally render it in `App.jsx` based on `useLocation().pathname` rather than modifying the component itself.
+</Tip>

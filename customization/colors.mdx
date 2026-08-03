@@ -1,0 +1,141 @@
+---
+title: "Color System: Space Mission's Tailwind Color Palette"
+sidebarTitle: "Colors"
+description: "Space Mission defines five custom Tailwind color tokens — space-navy, space-turquoise, space-teal, space-white, and space-violet — plus the .hud-border composite utility class."
+---
+
+Space Mission's visual identity is built on a tightly scoped palette of five custom Tailwind color tokens. Each token carries a deliberate role — from the near-black `space-navy` that blankets every background to the electric `space-turquoise` that pulses through interactive elements, borders, and the typewriter cursor. All five tokens are registered in the Tailwind configuration and compiled into `assets/main.css`, meaning you get full opacity-modifier support (e.g. `bg-space-navy/80`) out of the box.
+
+## Color Tokens
+
+| Token | Hex | RGB | Usage |
+|---|---|---|---|
+| `space-navy` | `#020617` | `2 6 23` | Primary background for `<body>`, overlays, and panel fills |
+| `space-turquoise` | `#22d3ee` | `34 211 238` | Primary accent — borders, active states, typewriter cursor, hover glows |
+| `space-teal` | `#14b8a6` | `20 184 166` | Secondary accent — scrollbar thumb, supporting highlights |
+| `space-white` | `#f1f5f9` | `241 245 249` | Primary text and foreground elements |
+| `space-violet` | `#7c3aed` | `124 58 237` | Backend skill badges and Void Explorer section accents |
+
+## The `.hud-border` Utility Class
+
+The `.hud-border` class is a composite `@layer components` utility that captures the recurring "heads-up display panel" look used across cards, modals, and nav elements throughout the portfolio. Rather than repeating four separate Tailwind utilities on every panel, you apply a single class name.
+
+```css
+.hud-border {
+  border-width: 1px;
+  border-color: #22d3ee4d;          /* space-turquoise at 30% opacity */
+  background-color: #020617cc;      /* space-navy at 80% opacity      */
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+  backdrop-filter: blur(12px);
+}
+```
+
+Each property contributes a distinct layer of the HUD aesthetic:
+
+- **`border-color: #22d3ee4d`** — A 30 % opacity turquoise border traces the panel edge, visible against dark content without overpowering it.
+- **`background-color: #020617cc`** — Navy at 80 % opacity lets background blur bleed through while keeping panel content readable.
+- **`box-shadow: 0 0 15px rgba(34, 211, 238, 0.1)`** — A subtle outward turquoise glow gives the panel an ambient light emission effect.
+- **`backdrop-filter: blur(12px)`** — Blurs whatever is behind the panel to 12 px, reinforcing the frosted-glass / translucent-HUD feel.
+
+Usage in JSX:
+
+```tsx
+<div className="hud-border rounded-lg p-6">
+  {/* panel content */}
+</div>
+```
+
+## How Colors Are Used Across Components
+
+The five tokens each occupy a clear domain within the component tree:
+
+**`space-turquoise`** is the primary interactive color. It appears on:
+- Active navigation link underlines and hover states (`hover:text-space-turquoise`, `group-hover:border-space-turquoise`)
+- The blinking typewriter cursor in the hero section
+- Focus rings on form inputs (`focus:border-space-turquoise`)
+- Gradient origins (`from-space-turquoise`) in decorative blobs
+- Scrollbar track hover color (`::-webkit-scrollbar-thumb:hover`)
+
+**`space-navy`** provides all background fills:
+- `<body>` base background (`bg-space-navy`)
+- Semi-transparent panel backgrounds at `bg-space-navy/50`, `bg-space-navy/80`, `bg-space-navy/90`, and `bg-space-navy/95`
+
+**`space-teal`** handles secondary supporting accents:
+- Scrollbar thumb at rest (`background-color: #14b8a680` — teal at 50 %)
+- Skill category borders and secondary highlight text (`text-space-teal`, `border-space-teal`)
+
+**`space-white`** is used for all body copy, descriptions, and foreground text, with opacity variants (`text-space-white/70`, `text-space-white/50`, etc.) creating visual hierarchy without introducing new hues.
+
+**`space-violet`** appears specifically on backend-technology skill chips and as the accent hue inside the Void Explorer themed section (`bg-space-violet/10`).
+
+## Text Selection Highlight
+
+Space Mission overrides the browser's default blue selection color with a custom turquoise style applied globally to `body` and all its descendants:
+
+```css
+body *::selection {
+  background-color: #22d3ee4d; /* space-turquoise/30 */
+  color: rgb(34 211 238);      /* space-turquoise    */
+}
+```
+
+This means highlighted text shows turquoise-on-turquoise-tint — consistent with the overall accent palette — in any browser that supports the `::selection` pseudo-element.
+
+## Scrollbar Styling
+
+Custom scrollbar styles are applied via the WebKit pseudo-element API and target all scrollable areas of the page:
+
+```css
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgb(2 6 23); /* space-navy */
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: #14b8a680;   /* space-teal/50 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(34 211 238); /* space-turquoise */
+}
+```
+
+The result is a slim, pill-shaped scrollbar that matches the dark navy background at rest, shifts to teal when content is scrolling, and brightens to full turquoise on hover.
+
+<Note>
+  WebKit scrollbar styles (`::-webkit-scrollbar-*`) apply in Chrome, Edge, and Safari but are **not supported in Firefox**. Firefox uses `scrollbar-width` and `scrollbar-color` for equivalent control.
+</Note>
+
+## Changing the Primary Accent Color
+
+To swap `space-turquoise` for a different accent hue across the entire portfolio, update its value in `tailwind.config.js` and rebuild:
+
+```js
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        'space-turquoise': '#f472b6', // swap in any hex value
+      },
+    },
+  },
+};
+```
+
+Then run the build to regenerate `assets/main.css`:
+
+```bash
+npm run build
+```
+
+Every utility class that references `space-turquoise` — `text-space-turquoise`, `border-space-turquoise`, `bg-space-turquoise/30`, the `.hud-border` border color, and the `::selection` override — will all update automatically because they are compiled from the single token definition.
+
+<Note>
+  Tailwind purges unused classes at build time by scanning your source files. Always run `npm run build` after changing any color token. Classes that were never used in the scanned files will not appear in the output CSS even if they exist in the config.
+</Note>

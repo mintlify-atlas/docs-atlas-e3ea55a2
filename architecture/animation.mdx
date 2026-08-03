@@ -1,0 +1,353 @@
+---
+title: "Animation System: Framer Motion in Space Mission"
+sidebarTitle: "Animation"
+description: "Space Mission uses Framer Motion for page transitions, scroll-driven parallax effects, spring physics, and layout animations. Learn the patterns used across every page."
+---
+
+Every moving element in Space Mission is powered by **Framer Motion**. Rather than mixing CSS `@keyframes`, `transition` properties, and a separate JS animation library, the project commits to a single animation backbone. This gives a consistent API across page transitions, scroll-driven parallax, spring-physics layout animations, and viewport entrance effects.
+
+---
+
+## Animation Patterns
+
+<Tabs>
+  <Tab title="Page Transitions">
+
+### The `<PageTransition>` Wrapper
+
+Every page component returns its content inside a `<PageTransition>` component. This component is a single `motion.div` that defines `initial`, `animate`, and `exit` states for the entire page surface:
+
+```jsx
+// components/PageTransition.js
+import { motion } from "framer-motion";
+
+const PageTransition = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+    animate={{ opacity: 1, scale: 1,    filter: "blur(0px)"  }}
+    exit={{    opacity: 0, scale: 1.05, filter: "blur(10px)" }}
+    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    className="min-h-screen pt-24 pb-12 px-4 md:px-8 relative z-10"
+  >
+    {children}
+  </motion.div>
+);
+```
+
+The cubic-bezier `[0.22, 1, 0.36, 1]` is an "ease-out expo" curve — pages accelerate in and decelerate sharply, giving a snappy feel consistent with the HUD aesthetic.
+
+### `AnimatePresence mode="wait"` in the Router
+
+Page transitions only work because `AnimatePresence` wraps the `<Routes>` block with `mode="wait"`. This setting tells Framer Motion to **finish the exit animation before starting the entrance animation**, preventing two pages from being visible simultaneously:
+
+```jsx
+const location = useLocation();
+
+return (
+  <AnimatePresence mode="wait">
+    <Routes location={location} key={location.pathname}>
+      <Route path="/"       element={<Home />} />
+      <Route path="/about"  element={<About />} />
+      {/* ...other routes... */}
+    </Routes>
+  </AnimatePresence>
+);
+```
+
+The `key={location.pathname}` is essential — it forces React to unmount the old page component tree and mount a new one on each navigation, which fires `exit` on the old tree and `initial → animate` on the new one.
+
+  </Tab>
+  <Tab title="Scroll-Driven Effects">
+
+### `useScroll` + `useTransform` on the About Page
+
+The About page (`/about`) creates a `400vh` scroll container with a sticky inner panel. As the user scrolls through the four-viewport height, `useScroll` tracks `scrollYProgress` (a value from `0` to `1`), and `useTransform` maps that progress to visual properties.
+
+```jsx
+// About page (simplified from assets/main.js)
+import { useScroll, useTransform } from "framer-motion";
+
+const About = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  return (
+    <PageTransition>
+      <div ref={containerRef} className="h-[400vh] relative">
+        {/* Sticky panel */}
+        <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
+          {/* Background fade controlled by scroll position */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              opacity: useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [1, 0.5, 0.5, 1]),
+            }}
+          />
+
+          {/* Career sections driven by scroll ranges */}
+          <CareerSection progress={scrollYProgress} range={[0, 0.33]}   title="Origin" />
+          <CareerSection progress={scrollYProgress} range={[0.33, 0.66]} title="Deep Space" />
+          <CareerSection progress={scrollYProgress} range={[0.66, 1]}   title="Current Orbit" />
+        </div>
+
+        {/* Scroll position indicator */}
+        <div className="fixed left-8 top-1/2 -translate-y-1/2 h-64 w-8 flex flex-col items-center z-20">
+          <motion.div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 border border-space-turquoise bg-space-navy rotate-45"
+            style={{
+              top: useTransform(scrollYProgress, [0, 1], ["0%", "100%"]),
+            }}
+          />
+        </div>
+      </div>
+    </PageTransition>
+  );
+};
+```
+
+The `C()` shorthand used internally is an alias for `useTransform`, mapping scroll progress ranges to output value ranges:
+
+```js
+// C() shorthand — maps scrollYProgress to CSS output values
+// C(motionValue, inputRange, outputRange)
+style={{ top: C(scrollYProgress, [0, 1], ["0%", "100%"]) }}
+```
+
+The Blog Detail page uses a similar pattern — `useScroll` combined with `useSpring` to create a smooth reading-progress indicator that follows the scroll position with spring damping:
+
+```jsx
+const { scrollYProgress } = useScroll();
+const smoothProgress = useSpring(scrollYProgress, {
+  stiffness: 100,
+  damping: 30,
+  restDelta: 0.001,
+});
+```
+
+  </Tab>
+  <Tab title="Spring Physics">
+
+### Navigation Active Indicator
+
+The navigation bar uses a Framer Motion **layout animation** powered by `layoutId` to animate the active state indicator. When the user navigates to a new route, the highlight smoothly slides from the old nav item to the new one using spring physics:
+
+```jsx
+// From components/Navigation.js
+{routes.map((route) => {
+  const isActive = currentPath === route.path;
+  return (
+    <div key={route.path} className="relative group px-3 py-1.5">
+      {/* Active highlight — shared layoutId causes spring motion between items */}
+      {isActive && (
+        <motion.div
+          layoutId="nav-active"
+          className="absolute inset-0 bg-space-turquoise z-0"
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+          }}
+        />
+      )}
+      <span className="relative z-10 font-mono text-xs">
+        {route.label}
+      </span>
+    </div>
+  );
+})}
+```
+
+Because all instances share the same `layoutId="nav-active"`, Framer Motion automatically calculates the position delta between the old active item and the new one, and animates the element across the gap using a spring.
+
+### Project Detail Panel Slide-In
+
+On the Projects page (`/star_map`), clicking a project node slides a detail panel in from the right. `AnimatePresence` handles the mount/unmount, while the spring transition controls the feel of the slide:
+
+```jsx
+<AnimatePresence>
+  {selectedProject && (
+    <motion.div
+      initial={{ x: "100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "100%" }}
+      transition={{
+        type: "spring",
+        damping: 25,
+        stiffness: 200,
+      }}
+      className="absolute top-0 right-0 bottom-0 w-full md:w-96
+                 hud-border bg-space-navy/95 backdrop-blur-xl z-30
+                 border-l border-space-turquoise/30 flex flex-col"
+    >
+      {/* Panel content */}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+`damping: 25` gives a slight overshoot-and-settle feel. `stiffness: 200` keeps the panel snappy rather than sluggish.
+
+  </Tab>
+  <Tab title="Entrance Animations">
+
+### `whileInView` + `viewport={{ once: true }}`
+
+Elements that should animate in as they scroll into the viewport use `whileInView` with `viewport={{ once: true }}` so the animation fires only the first time — not every time the user scrolls up and back down.
+
+**Work History timeline items** stagger in using a `delay` based on their index:
+
+```jsx
+// Work history list (from assets/main.js)
+{workHistory.map((job, index) => (
+  <motion.div
+    key={job.id}
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ delay: index * 0.1 }}
+    className="relative pl-24 group"
+  >
+    {/* Job card */}
+  </motion.div>
+))}
+```
+
+The `margin: "-100px"` on `viewport` means the animation triggers when the element is 100px away from entering the visible area — giving a feeling of the items being ready just before they appear.
+
+**The skills constellation graph** also uses `whileInView` for the SVG path `pathLength` animation, drawing connecting lines between skill nodes as the section scrolls in:
+
+```jsx
+<motion.line
+  x1={`${nodeA.x}%`} y1={`${nodeA.y}%`}
+  x2={`${nodeB.x}%`} y2={`${nodeB.y}%`}
+  stroke={constellation.color}
+  strokeOpacity={0.6}
+  initial={{ pathLength: 0 }}
+  animate={{ pathLength: 1 }}
+  transition={{ duration: 1.5, delay: index * 0.2 }}
+/>
+```
+
+### Case Study Card Entrance
+
+Case study cards stagger in from scale using a slightly different entrance pattern:
+
+```jsx
+{caseStudies.map((study, index) => (
+  <motion.div
+    key={study.slug}
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: index * 0.1 }}
+  >
+    <Link to={`/case-studies/${study.slug}`}>
+      {/* Card content */}
+    </Link>
+  </motion.div>
+))}
+```
+
+Note that these use `animate` (not `whileInView`) because the entire case studies page mounts at once and all cards are visible on load.
+
+  </Tab>
+  <Tab title="Conditional & Looping">
+
+### `AnimatePresence` for Conditional UI
+
+Any UI element that conditionally mounts and unmounts benefits from `AnimatePresence`. The pattern appears in two key places:
+
+**Project detail panel** (covered in Spring Physics above) — slides in from the right when a project is selected, exits back out when dismissed.
+
+**Contact form success state** — the form fades out and a confirmation message fades in:
+
+```jsx
+<AnimatePresence mode="wait">
+  {formState === "sent" ? (
+    <motion.div
+      key="success"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center py-16"
+    >
+      <h3 className="font-mono text-xl text-space-turquoise">
+        TRANSMISSION SENT
+      </h3>
+      <p className="font-mono text-sm text-space-white/50">
+        Awaiting handshake. Comms latency: ~24 hours.
+      </p>
+    </motion.div>
+  ) : (
+    <motion.form key="form" onSubmit={handleSubmit}>
+      {/* Form fields */}
+    </motion.form>
+  )}
+</AnimatePresence>
+```
+
+### The `animate-ping-slow` Radar Ring
+
+Project nodes on the star map have a pulsing radar-ring effect implemented as a Tailwind CSS animation rather than Framer Motion. A duplicate `div` sits behind each project node with the custom `animate-ping-slow` class:
+
+```jsx
+<div
+  className="absolute inset-0 rounded-full animate-ping-slow opacity-20"
+  style={{
+    backgroundColor: project.color,
+    transform: "scale(2)",
+  }}
+/>
+```
+
+`animate-ping-slow` is a custom Tailwind utility — a slower variant of the built-in `animate-ping` keyframe — defined in the Tailwind config to create the slower, atmospheric radar pulse.
+
+### Looping Animations
+
+Several ambient elements loop indefinitely using Framer Motion's `repeat: Infinity`:
+
+**Shooting stars** (in `<Starfield>`) fly across the screen at random intervals:
+
+```jsx
+<motion.div
+  className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent w-32"
+  initial={{ x: "-10vw", y: "20vh", rotate: 35, opacity: 0 }}
+  animate={{ x: "110vw",  y: "80vh", opacity: [0, 1, 1, 0] }}
+  transition={{
+    duration: 1.5,
+    repeat: Infinity,
+    repeatDelay: delay + Math.random() * 5,
+    ease: "linear",
+  }}
+/>
+```
+
+**The Home page sun** pulses its `boxShadow` in and out:
+
+```jsx
+<motion.div
+  animate={{
+    boxShadow: [
+      "0 0 60px rgba(251,146,60,0.6)",
+      "0 0 80px rgba(251,146,60,0.8)",
+      "0 0 60px rgba(251,146,60,0.6)",
+    ],
+  }}
+  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+/>
+```
+
+**Testimonial cards** float vertically on the Testimonials page with a slow sinusoidal loop:
+
+```jsx
+<motion.div
+  animate={{ y: [0, -20, 0] }}
+  transition={{
+    y: { duration: 10, repeat: Infinity, ease: "easeInOut", delay: card.delay },
+  }}
+/>
+```
+
+  </Tab>
+</Tabs>

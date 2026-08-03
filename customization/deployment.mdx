@@ -1,0 +1,225 @@
+---
+title: "Deploying Space Mission to GitHub Pages, Vercel, or Netlify"
+sidebarTitle: "Deployment"
+description: "Space Mission builds to a static dist/ folder and can be deployed to GitHub Pages, Vercel, Netlify, or any static host. Learn the configuration for each platform."
+---
+
+Space Mission is a fully static single-page application. Running `npm run build` produces a self-contained `dist/` folder — no server, no runtime, no Node.js process required in production. That folder can be dropped onto any static hosting platform and served exactly as-is, which means GitHub Pages, Vercel, Netlify, an S3 bucket, Cloudflare Pages, or a plain Nginx server all work without modification.
+
+---
+
+## Build Output
+
+Before deploying, it helps to understand what `npm run build` produces:
+
+```
+dist/
+├── index.html              # Root HTML entry point (the SPA shell)
+├── .nojekyll               # Disables Jekyll processing on GitHub Pages
+├── assets/
+│   ├── main.js             # Compiled & bundled application code (all pages + data)
+│   ├── main.css            # Compiled Tailwind CSS
+│   ├── proxy.js            # React / Framer Motion vendor chunk
+│   └── index.js            # React Router + utility chunk
+├── components/
+│   ├── Navigation.js       # Preloaded navigation component module
+│   ├── Starfield.js        # Preloaded starfield background module
+│   ├── PageTransition.js   # Preloaded page transition module
+│   └── OrbitSystem.js      # Preloaded orbit animation module
+└── pages/
+    ├── About.html
+    ├── Blog.html
+    ├── BlogDetail.html
+    ├── CaseStudies.html
+    ├── CaseStudyDetail.html
+    ├── Contact.html
+    ├── Projects.html
+    ├── Skills.html
+    ├── Testimonials.html
+    └── Work.html
+```
+
+The `pages/*.html` files are static HTML shells — each one sets `window.__STATIC_PAGE_ROUTE__` and redirects the browser's hash to the correct route (e.g. `#/projects`). They exist specifically to support direct URL access on hosts like GitHub Pages that cannot rewrite all paths to `index.html`.
+
+---
+
+## GitHub Pages
+
+GitHub Pages is the platform this repository is currently deployed on. The `main` branch holds the pre-built output directly at the repository root — `index.html`, `assets/`, `components/`, and `pages/` — which GitHub Pages serves as a static site.
+
+<Steps>
+  <Step title="Build the project">
+    Run the build command from the repository root:
+
+    ```bash
+    npm run build
+    ```
+
+    The output lands in `dist/`.
+  </Step>
+
+  <Step title="Verify the .nojekyll file">
+    The `dist/` folder includes a `.nojekyll` file at its root. This file tells GitHub Pages to skip Jekyll processing, which would otherwise strip files and folders whose names begin with an underscore (such as `_app` or `_next`). Space Mission does not use such paths, but keeping `.nojekyll` present is good practice and matches the current deployment.
+
+    ```bash
+    # Confirm it exists in the build output
+    ls dist/.nojekyll
+    ```
+  </Step>
+
+  <Step title="Configure GitHub Pages in repository settings">
+    Navigate to your repository on GitHub → **Settings** → **Pages**. Under **Source**, choose either:
+
+    - **Deploy from a branch** → select `main` and root `/` if you commit the `dist/` contents directly to the repository root (the current approach).
+    - **Deploy from a branch** → select `gh-pages` and root `/` if you push the `dist/` contents to a dedicated `gh-pages` branch.
+
+    Save the settings. GitHub will assign a URL in the form `https://<username>.github.io/<repo-name>/`.
+  </Step>
+
+  <Step title="Push the built output">
+    Copy the contents of `dist/` to the root of your deploy branch and push:
+
+    ```bash
+    # If deploying from main branch root (current setup):
+    cp -r dist/. .
+    git add .
+    git commit -m "chore: update build output"
+    git push origin main
+
+    # Or if using a dedicated gh-pages branch:
+    git subtree push --prefix dist origin gh-pages
+    ```
+  </Step>
+
+  <Step title="Visit your site">
+    After GitHub finishes building (usually under a minute), your portfolio is live at:
+
+    ```
+    https://<username>.github.io/<repo-name>/
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  **How direct URL access works on GitHub Pages.** GitHub Pages can only serve static files — it has no URL rewriting capability. When a visitor navigates directly to `https://username.github.io/space-mission/pages/Projects.html`, the server finds and serves that file. The `Projects.html` shell immediately sets `window.location.hash = "/projects"`, which React Router's hash-based router reads and renders the Projects page. This is why the `pages/` directory exists: each HTML shell acts as a doorway that catches direct traffic and hands it off to the React app with the correct hash route already set.
+</Note>
+
+---
+
+## Vercel
+
+Vercel auto-detects Vite projects and requires minimal configuration. Because Space Mission uses hash routing, all navigation is handled client-side — but you still need a rewrite rule so that direct visits to any path resolve to `index.html`.
+
+<Steps>
+  <Step title="Import the repository">
+    Go to [vercel.com](https://vercel.com), click **Add New → Project**, and import your GitHub repository.
+  </Step>
+
+  <Step title="Configure the build settings">
+    Vercel's Vite preset fills most fields automatically. Confirm the following:
+
+    | Setting | Value |
+    |---------|-------|
+    | Framework Preset | **Vite** |
+    | Build Command | `npm run build` |
+    | Output Directory | `dist` |
+    | Install Command | `npm install` |
+  </Step>
+
+  <Step title="Add a vercel.json rewrite rule">
+    Create a `vercel.json` file in the repository root to ensure all paths serve `index.html`:
+
+    ```json
+    {
+      "rewrites": [
+        { "source": "/(.*)", "destination": "/index.html" }
+      ]
+    }
+    ```
+
+    This allows visitors to bookmark or share direct links (e.g. `https://your-site.vercel.app/pages/Projects.html`) and still land on the app.
+  </Step>
+
+  <Step title="Deploy">
+    Click **Deploy**. Vercel runs `npm run build`, uploads the `dist/` output to its edge network, and provides a deployment URL. Every subsequent push to `main` triggers an automatic redeploy.
+  </Step>
+</Steps>
+
+---
+
+## Netlify
+
+Netlify's build pipeline works similarly to Vercel. The key addition is a `_redirects` file that instructs Netlify's CDN to serve `index.html` for any path.
+
+<Steps>
+  <Step title="Connect the repository">
+    Log in to [netlify.com](https://netlify.com), click **Add new site → Import an existing project**, and connect your GitHub repository.
+  </Step>
+
+  <Step title="Configure the build settings">
+    | Setting | Value |
+    |---------|-------|
+    | Build Command | `npm run build` |
+    | Publish Directory | `dist` |
+
+    Leave other fields at their defaults.
+  </Step>
+
+  <Step title="Add a _redirects file">
+    Create `public/_redirects` in the source repository (Vite copies the `public/` directory into `dist/` during the build):
+
+    ```
+    /* /index.html 200
+    ```
+
+    This single rule tells Netlify to return `index.html` with a `200 OK` for every URL — the React app then reads the hash and renders the correct page.
+  </Step>
+
+  <Step title="Deploy">
+    Click **Deploy site**. Netlify runs the build, publishes `dist/`, and assigns a URL like `https://your-site.netlify.app`. Future pushes to `main` trigger automatic redeployments.
+  </Step>
+</Steps>
+
+---
+
+## Custom Domain
+
+All three platforms support custom domains through their dashboard settings — typically under **Settings → Domains**. Point your domain's DNS to the platform's nameservers or add a CNAME record as instructed.
+
+If you are deploying to a **subdirectory path** (e.g. `https://example.com/space-mission/` rather than the root), you must also update the `base` option in `vite.config.ts`:
+
+```typescript
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  base: "/space-mission/", // Set to your subdirectory path
+});
+```
+
+Without this, Vite emits asset URLs as `/assets/main.js` (relative to the root), which will 404 when the app is served from a subdirectory.
+
+---
+
+## Environment Variables
+
+Space Mission has **no runtime environment variables** — all configuration is baked in at compile time. There is no `.env` file required to build or run the project in its current form.
+
+If you extend the portfolio to include a live contact form, a CMS integration, or any third-party API, add those secrets as platform environment variables and reference them in the source using Vite's `import.meta.env` convention:
+
+```typescript
+// In your source file:
+const apiKey = import.meta.env.VITE_CONTACT_API_KEY;
+```
+
+Variable names **must** be prefixed with `VITE_` to be exposed to the browser bundle. Add them in:
+
+- **GitHub Pages**: GitHub Actions secrets, then inject them during the build step in your workflow file.
+- **Vercel**: **Project Settings → Environment Variables**.
+- **Netlify**: **Site Settings → Environment Variables**.
+
+<Note>
+  Never prefix a variable with `VITE_` if it contains a secret that should stay server-side (e.g. a private API key). Anything with that prefix is embedded in the public JavaScript bundle and visible to anyone who inspects the source.
+</Note>

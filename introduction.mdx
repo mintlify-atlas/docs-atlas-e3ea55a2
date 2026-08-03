@@ -1,0 +1,124 @@
+---
+title: "Space Mission: Space-Themed React Portfolio"
+sidebarTitle: "Introduction"
+description: "Space Mission is a React 18 + TypeScript portfolio SPA with animated starfields, orbital visuals, HUD UI components, and a full suite of pages for showcasing developer work."
+---
+
+Space Mission is a fully animated, space-themed personal portfolio SPA built for developers who want their work to stand out. Powered by React 18 and TypeScript, it pairs a rich visual layer — live starfields, orbiting planet systems, constellation skill maps — with practical content pages covering projects, work history, case studies, a blog, and a contact form. Whether you're a frontend engineer, full-stack developer, or creative technologist, Space Mission gives you a polished, production-ready portfolio that feels genuinely different from the standard template.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Animated Starfield" icon="stars">
+    A canvas-based `Starfield` component renders hundreds of procedurally placed, parallax-scrolling stars as a persistent full-viewport background across every page.
+  </Card>
+  <Card title="Orbit System" icon="globe">
+    The `OrbitSystem` component displays an animated solar system on the home page, with planets tracing elliptical paths around a central star — all driven by Framer Motion.
+  </Card>
+  <Card title="Scroll-Driven Career Timeline" icon="timeline">
+    The Work page renders an interactive career timeline whose entries animate into view as you scroll, giving recruiters and collaborators a cinematic look at your experience.
+  </Card>
+  <Card title="Draggable Project Star Map" icon="map">
+    Projects are plotted as interactive stars on a navigable star map. Each node is draggable and reveals a project card on click, turning your portfolio into an explorable galaxy.
+  </Card>
+  <Card title="Skill Constellations" icon="diagram-project">
+    Technologies are grouped into constellations on the Skills page. SVG lines connect related skills, forming recognizable patterns that visually communicate your expertise clusters.
+  </Card>
+  <Card title="HUD Navigation" icon="compass">
+    A heads-up-display navigation bar built with Lucide React icons and `Space Mono` monotype font gives the site a mission-control aesthetic on desktop and collapses to a mobile-friendly menu.
+  </Card>
+  <Card title="Page Transitions" icon="arrow-right-arrow-left">
+    The `PageTransition` wrapper component uses Framer Motion's `AnimatePresence` to slide and fade between routes, eliminating jarring full-page refreshes.
+  </Card>
+  <Card title="Blog & Case Studies" icon="newspaper">
+    Built-in blog and case study sections support slug-based detail pages, letting you publish long-form technical writing without a CMS — all content lives in JS data arrays.
+  </Card>
+  <Card title="Contact Form" icon="envelope">
+    The Contact page includes a ready-to-wire contact form styled to match the HUD design language, with field validation handled client-side.
+  </Card>
+  <Card title="Fully Responsive" icon="mobile">
+    Every page is built with Tailwind CSS v3 responsive utilities, ensuring the layout adapts gracefully from 320 px mobile screens to ultra-wide desktop monitors.
+  </Card>
+</CardGroup>
+
+## Pages Overview
+
+| Route | Page | What It Shows |
+|---|---|---|
+| `/` | Home | Animated starfield hero, `OrbitSystem` visual, mission briefing intro panel, HUD navigation |
+| `/about` | About | Personal bio, avatar, background story, and highlighted personal facts |
+| `/projects` | Projects | Interactive star-map of projects; each star expands to a project detail card |
+| `/skills` | Skills | Constellation diagram of technologies grouped by domain (frontend, backend, tooling, etc.) |
+| `/work` | Work | Scroll-driven career timeline with employer entries, roles, and date ranges |
+| `/case-studies` | Case Studies | Grid of featured case study cards linking to full write-ups |
+| `/case-studies/:slug` | Case Study Detail | Full-length individual case study with headings, body copy, and imagery |
+| `/blog` | Blog | Index of blog post cards sorted by date |
+| `/blog/:slug` | Blog Post | Full individual blog post rendered from a JS data object |
+| `/testimonials` | Testimonials | Carousel or grid of testimonial quotes from colleagues and clients |
+| `/contact` | Contact | Contact form + social links |
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| UI Framework | React 18 |
+| Language | TypeScript |
+| Build Tool | Vite |
+| Styling | Tailwind CSS v3 |
+| Animation | Framer Motion |
+| Routing | React Router v6 |
+| Icons | Lucide React |
+| Fonts | Space Mono · Fraunces · Inter (Google Fonts) |
+| Deployment | GitHub Pages (static SPA, hash routing) |
+
+## Project Structure
+
+The repository is a **pre-built Vite output** — the source has already been compiled and the resulting static files are what you clone and deploy. Here is how the repo is laid out:
+
+```
+space-mission/
+├── index.html                  # SPA entry point — mounts <div id="root">
+├── assets/
+│   ├── main.js                 # Bundled application entry (React bootstrap + all page logic)
+│   ├── index.js                # Bundled shared chunk (React, React DOM, router, Framer Motion)
+│   ├── proxy.js                # Bundled proxy/polyfill chunk
+│   └── main.css                # Compiled Tailwind stylesheet + Google Fonts import
+├── components/
+│   ├── Navigation.js           # HUD nav bar with all route links (pre-loaded module)
+│   ├── Starfield.js            # Canvas starfield background component
+│   ├── OrbitSystem.js          # Framer Motion orbit animation component
+│   └── PageTransition.js       # AnimatePresence route-transition wrapper
+└── pages/
+    ├── About.html              # Static HTML shell for /about (hash routing fallback)
+    ├── Blog.html               # Static HTML shell for /blog
+    ├── BlogDetail.html         # Static HTML shell for /blog/:slug
+    ├── CaseStudies.html        # Static HTML shell for /case-studies
+    ├── CaseStudyDetail.html    # Static HTML shell for /case-studies/:slug
+    ├── Contact.html            # Static HTML shell for /contact
+    ├── Projects.html           # Static HTML shell for /projects
+    ├── Skills.html             # Static HTML shell for /skills
+    ├── Testimonials.html       # Static HTML shell for /testimonials
+    └── Work.html               # Static HTML shell for /work
+```
+
+Each file under `pages/` is a minimal HTML shell that loads the same `assets/main.js` bundle. React Router's hash-based strategy (`HashRouter`) interprets the URL fragment to render the correct page component without requiring server-side rewrites — which makes the site trivially deployable on any static host, including GitHub Pages.
+
+<Note>
+  All portfolio content — project entries, blog posts, case studies, work history, skills, and testimonials — is stored as JavaScript arrays and objects inside `assets/main.js`. To customise the site's content you edit the source data arrays and rebuild. See [Content Data](/customization/content-data) for a detailed walkthrough.
+</Note>
+
+## Color Palette
+
+The visual identity is built on five core design tokens defined as Tailwind custom colors:
+
+| Token | Hex | Usage |
+|---|---|---|
+| `space-navy` | `#020617` | Global background, deepest dark |
+| `space-turquoise` | `#22d3ee` | Primary accent — links, active states, glows |
+| `space-teal` | `#14b8a6` | Secondary accent — hover states, borders |
+| `space-white` | `#f1f5f9` | Body copy and UI text |
+| `space-violet` | `#7c3aed` | Tertiary accent — tags, badges, constellation lines |
+
+<Tip>
+  The three font families each serve a distinct role: **Inter** (sans-serif) is the default body font; **Space Mono** (monospace) is used for the HUD navigation, code snippets, and any terminal-style labels; **Fraunces** (high-contrast serif) is reserved for large decorative headings to give the design an editorial quality.
+</Tip>

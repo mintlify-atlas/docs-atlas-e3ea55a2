@@ -1,47 +1,160 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Space Mission in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Clone the Space Mission portfolio, install dependencies with npm, start the Vite dev server, and open it in your browser — all in under five minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+By the end of this guide you will have a fully running local copy of the Space Mission portfolio displaying in your browser, understand how to build it for production, and know how to preview the production build before deploying. The whole process — from cloning to a live dev server — takes under five minutes on a modern machine.
 
 ## Prerequisites
 
-Before you begin, you must have:
+<Note>
+  Make sure you have the following tools installed before you begin:
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+  - **Node.js 18 or later** — [Download from nodejs.org](https://nodejs.org). Verify with `node --version`.
+  - **Git** — [Download from git-scm.com](https://git-scm.com). Verify with `git --version`.
+  - **A modern browser** — Chrome, Firefox, Edge, or Safari (latest stable). The animated canvas and CSS backdrop filters require a current rendering engine.
+</Note>
 
-## Get started
+## Steps
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Clone the repository">
+    Clone the Space Mission repo from GitHub to your local machine.
 
     ```bash
-    npm install your-package
+    git clone https://github.com/apursley2012/space-mission.git
+    cd space-mission
+    ```
+
+    This downloads the full project — including the pre-built assets, component modules, and static HTML shells — into a new `space-mission/` directory and moves you into it.
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all Node.js dependencies listed in `package.json`. Use whichever package manager you prefer:
+
+    <CodeGroup>
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+
+      ```bash pnpm
+      pnpm install
+      ```
+    </CodeGroup>
+
+    This pulls in React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, React Router v6, and Lucide React, along with their transitive dependencies. On a fast connection the install typically completes in 30–60 seconds.
+  </Step>
+
+  <Step title="Start the development server">
+    Launch the Vite dev server with hot module replacement enabled:
+
+    ```bash
+    npm run dev
+    ```
+
+    Vite will start almost instantly and print output similar to:
+
+    ```
+      VITE v5.x.x  ready in 300 ms
+
+      ➜  Local:   http://localhost:5173/
+      ➜  Network: use --host to expose
+    ```
+
+    <Note>
+      The dev server runs on **http://localhost:5173** by default. If that port is already in use, Vite will automatically increment to the next available port (e.g. `5174`) and display the updated URL in the terminal.
+    </Note>
+  </Step>
+
+  <Step title="Open the site in your browser">
+    Navigate to [http://localhost:5173](http://localhost:5173) in your browser. You should be greeted immediately by the Space Mission home page — a deep-navy canvas starfield with an orbiting solar system and the HUD navigation bar along the top.
+
+    The dev server supports **hot module replacement**: any changes you make to source files will be reflected in the browser instantly without a full page reload.
+  </Step>
+
+  <Step title="Build for production">
+    When you are ready to deploy, generate an optimised production build:
+
+    ```bash
+    npm run build
+    ```
+
+    Vite bundles and minifies all JavaScript, processes Tailwind CSS with PurgeCSS tree-shaking, and outputs the compiled static site into the `dist/` directory. The build typically completes in under 15 seconds.
+
+    ```
+    dist/
+    ├── index.html
+    ├── assets/
+    │   ├── main-[hash].js
+    │   ├── main-[hash].css
+    │   └── ...
+    └── pages/
+        └── ...
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+
+  <Step title="Preview the production build">
+    Before pushing to a host, you can serve and inspect the production build locally:
 
     ```bash
-    your-cli init
+    npm run preview
     ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+
+    Vite's preview server starts on **http://localhost:4173** by default and serves the exact files from `dist/` — giving you a faithful reproduction of what visitors will see on your deployed site, including hash routing behaviour.
 
     ```bash
-    your-cli start
+    # Example output
+      ➜  Local:   http://localhost:4173/
+      ➜  Network: use --host to expose
     ```
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## What You'll See
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+When you first open the site at `http://localhost:5173`, the **Home page** loads with several animated layers working together:
+
+- **Starfield background** — The `Starfield` canvas component fills the entire viewport with hundreds of white and cyan star particles at varying depths, creating a subtle parallax effect as you move the cursor or scroll.
+- **Orbit System** — Centred on the home page, the `OrbitSystem` component animates a small solar system with a glowing central star and multiple planets tracing smooth elliptical orbits, all powered by Framer Motion `motion` elements.
+- **HUD Navigation bar** — Across the top of the screen, the `Navigation` component renders a heads-up-display-style bar in `Space Mono` monospace font. Each route link glows in `space-turquoise` (`#22d3ee`) on hover and the active route stays highlighted. On smaller screens the nav collapses into a mobile menu.
+- **Mission briefing panel** — Below the orbital visual, a translucent panel introduces you (or your portfolio's subject) with a headline and short bio copy, styled with a subtle backdrop blur over the starfield.
+
+Clicking any nav link triggers the `PageTransition` wrapper, which fades and slides the outgoing page out while the new one animates in — no jarring full-page loads.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Architecture Overview"
+    icon="sitemap"
+    href="/architecture/overview"
+  >
+    Deep-dive into how the component tree is structured, how React Router handles hash-based navigation, and how the bundled assets relate to the source modules.
+  </Card>
+  <Card
+    title="Customising Content Data"
+    icon="database"
+    href="/customization/content-data"
+  >
+    Learn how to update the JavaScript data arrays inside `assets/main.js` to swap in your own projects, work history, blog posts, case studies, and testimonials.
+  </Card>
+  <Card
+    title="Changing the Color Palette"
+    icon="palette"
+    href="/customization/colors"
+  >
+    Find out how the five `space-*` Tailwind tokens are defined and how to retheme the site to your own colour scheme without touching component markup.
+  </Card>
+  <Card
+    title="Deploying to GitHub Pages"
+    icon="cloud-arrow-up"
+    href="/customization/deployment"
+  >
+    Step-by-step instructions for configuring the Vite base path, enabling the `.nojekyll` file, and pushing your production build to GitHub Pages for free static hosting.
+  </Card>
+</CardGroup>

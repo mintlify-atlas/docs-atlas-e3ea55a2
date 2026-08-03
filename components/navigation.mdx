@@ -1,0 +1,178 @@
+---
+title: "Navigation Component: Space Mission's HUD Nav Bar"
+sidebarTitle: "Navigation"
+description: "The Navigation component is a fixed HUD-style header with a status display, animated desktop nav links, an active indicator spring animation, and a mobile slide-out drawer."
+---
+
+The `Navigation` component is the persistent top-of-screen header in Space Mission. It sits in a `fixed` position with `z-50` so it always floats above every page, the starfield background, and any animated content. On desktop it presents a horizontal HUD control panel — status readout on the left, nine nav links across the center/right — while on mobile it collapses to a hamburger button that opens a Framer Motion slide-down drawer.
+
+## Desktop Layout
+
+The bar is divided into two visible regions on wide screens:
+
+**Left — HUD Status Panel.** A small pulsing beacon dot (animated with CSS or Framer Motion) sits next to the text `NAV_SYS_ONLINE`, with the current `window.location.pathname` rendered beneath it in a monospace font. This panel is purely informational and gives the UI its mission-control feel.
+
+**Center/Right — Nav Links.** Nine `<NavLink>` elements from React Router are spread horizontally. React Router's `NavLink` automatically receives an `isActive` prop that the component uses to apply active styling and trigger the Framer Motion underline indicator.
+
+```jsx
+import { NavLink, useLocation } from 'react-router-dom';
+
+// Status panel example
+const { pathname } = useLocation();
+
+<div className="flex items-center gap-2 font-mono text-xs text-space-teal">
+  <span className="w-2 h-2 rounded-full bg-space-teal animate-pulse" />
+  <div>
+    <div>NAV_SYS_ONLINE</div>
+    <div className="text-space-white/60">{pathname}</div>
+  </div>
+</div>
+```
+
+## Nav Routes
+
+All nine routes are defined in the `Uo` array inside the component. Each object maps a path to a mission-control label displayed in the nav bar:
+
+| Path | Label |
+|---|---|
+| `/` | `SYS_CORE` |
+| `/about` | `ORIGIN` |
+| `/projects` | `STAR_MAP` |
+| `/skills` | `CONSTELLATIONS` |
+| `/work` | `LOGS` |
+| `/case-studies` | `ARCHIVE` |
+| `/blog` | `TRANSMISSIONS` |
+| `/testimonials` | `SIGNALS` |
+| `/contact` | `COMMS` |
+
+## Active Indicator
+
+The active nav link is highlighted by a Framer Motion shared-layout background element using `layoutId='nav-active'`. When the route changes, Framer Motion detects that a new `<NavLink>` now owns the `layoutId` and smoothly spring-animates the background pill from its old position to the new one — no manual transition code required.
+
+```jsx
+import { motion } from 'framer-motion';
+import { NavLink } from 'react-router-dom';
+
+{routes.map(({ path, label }) => (
+  <NavLink key={path} to={path}>
+    {({ isActive }) => (
+      <span className="relative px-3 py-1 font-mono text-xs">
+        {isActive && (
+          <motion.span
+            layoutId="nav-active"
+            className="absolute inset-0 rounded bg-space-teal/20 border border-space-teal/40"
+            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+          />
+        )}
+        <span className="relative z-10">{label}</span>
+      </span>
+    )}
+  </NavLink>
+))}
+```
+
+<Note>
+`layoutId` must be unique across the entire React tree. The value `'nav-active'` is already reserved by Navigation — do not reuse this string in other components.
+</Note>
+
+## Mobile Navigation
+
+On small viewports the center links are hidden and a hamburger `Menu` icon appears on the right side of the bar. Tapping it toggles a Framer Motion animated drawer that slides down from below the header. Each route item in the drawer is prefixed with a crosshair icon and closes the drawer automatically when tapped.
+
+```jsx
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, X, Crosshair } from 'lucide-react';
+
+// Drawer
+<AnimatePresence>
+  {isOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="absolute top-full left-0 w-full bg-space-navy/95 border-b border-space-teal/20"
+    >
+      {routes.map(({ path, label }) => (
+        <NavLink key={path} to={path} onClick={() => setIsOpen(false)}>
+          <div className="flex items-center gap-3 px-6 py-4 font-mono text-sm">
+            <Crosshair className="w-4 h-4 text-space-teal" />
+            {label}
+          </div>
+        </NavLink>
+      ))}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+<Tip>
+The drawer closes when any link is clicked because the `onClick` callback calls `setIsOpen(false)`. If you add a new route you do not need to wire this up separately — it inherits the same handler from the `routes.map`.
+</Tip>
+
+## Adding a New Nav Item
+
+To add a route to the navigation, insert a new object into the `Uo` array in `Navigation.js`:
+
+```jsx
+// Inside Navigation.js — the Uo routes array
+const Uo = [
+  { path: '/',            label: 'SYS_CORE'      },
+  { path: '/about',       label: 'ORIGIN'        },
+  { path: '/projects',    label: 'STAR_MAP'      },
+  { path: '/skills',      label: 'CONSTELLATIONS'},
+  { path: '/work',        label: 'LOGS'          },
+  { path: '/case-studies',label: 'ARCHIVE'       },
+  { path: '/blog',        label: 'TRANSMISSIONS' },
+  { path: '/testimonials',label: 'SIGNALS'       },
+  { path: '/contact',     label: 'COMMS'         },
+  // ✅ Add your new route here:
+  { path: '/awards',      label: 'HONOURS'       },
+];
+```
+
+Then create the matching page component and register it in your router:
+
+```jsx
+// src/pages/Awards.jsx
+import { PageTransition } from '../components/PageTransition';
+
+const AwardsPage = () => (
+  <PageTransition>
+    <div className="max-w-6xl mx-auto">
+      <h1 className="font-mono text-space-teal">HONOURS</h1>
+      {/* page content */}
+    </div>
+  </PageTransition>
+);
+
+export default AwardsPage;
+```
+
+```jsx
+// In your router configuration
+import AwardsPage from './pages/Awards';
+
+<Route path="/awards" element={<AwardsPage />} />
+```
+
+<ParamField path="path" type="string" required>
+  The React Router path string. Must begin with `/` and be unique across all routes.
+</ParamField>
+
+<ParamField path="label" type="string" required>
+  The mission-control display label shown in the nav bar. Convention is `UPPER_SNAKE_CASE`.
+</ParamField>
+
+## Customization
+
+**Changing a label.** Labels are purely display strings — edit the `label` value in `Uo` without touching any other file.
+
+**Changing the status text.** The `NAV_SYS_ONLINE` string is hardcoded in the JSX of the status panel. Replace it with any string; for example you could make it dynamic based on an online/offline event listener.
+
+**Adjusting the spring.** The `layoutId='nav-active'` indicator uses a spring transition. Tune `stiffness` and `damping` to control how snappy or floaty the slide feels:
+
+```jsx
+transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+// Snappier:  stiffness: 600, damping: 40
+// Floatier:  stiffness: 120, damping: 15
+```

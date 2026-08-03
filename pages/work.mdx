@@ -1,0 +1,143 @@
+---
+title: "Work History Page (LOGS): Animated Career Timeline"
+sidebarTitle: "Work History"
+description: "The Work History page shows a vertically scrolling timeline of career roles styled as mission logs, with animated entrance effects and color-coded mission patch borders."
+---
+
+The Work History page (`/work`) presents career roles as a vertical **Mission Logs** timeline — each entry is a classified debrief rendered inside a `hud-border` card. The page header reads **"Mission Logs"** with the monospaced sub-label `SERVICE HISTORY // CHRONOLOGICAL`. A continuous `1px bg-space-white/10` vertical line runs down the left edge of the timeline, evoking a signal trace or a flight computer readout strip. Each entry animates into view as the user scrolls past it, using Framer Motion's `whileInView`.
+
+## Timeline Structure
+
+All entries share a `relative pl-24 group` wrapper. The `pl-24` (96px) padding creates the left gutter where the mission patch badge sits. A `group` class enables CSS `group-hover:` utilities so the card border brightens when the cursor enters the entry area.
+
+Each entry card is a `hud-border p-6 rounded-sm` div with `transition-colors group-hover:border-space-turquoise/50`. The card's internal layout:
+
+1. **Header row** — Role title (serif, `text-2xl`) + company name (`font-mono text-sm text-space-turquoise`) on the left; STARDATE badge + an animated waveform SVG (visible on hover only) on the right.
+2. **DEBRIEF label** — `font-mono text-xs text-space-white/40 mb-2`
+3. **Body copy** — `text-space-white/80 leading-relaxed font-sans`
+4. **Tech stack chips** — `flex flex-wrap gap-2` row of pill `<span>` elements
+
+### Mission Patch Badge
+
+An `absolute left-4 top-0 w-8 h-8` square badge sits on the timeline line, centered with `-translate-x-1/2`. It uses `rounded-sm border-2 bg-space-navy` and its border/text color classes come from the entry's `patchColor` field. An ACTIVE badge additionally carries `animate-pulse`, creating a heartbeat glow effect.
+
+### Hover Waveform
+
+On `group-hover`, a hidden `<svg>` renders a `motion.polyline` pulse-trace that animates its `pathLength` from `0` to `1` over `1.5s` using `whileInView`. This is the `EKG`-style waveform drawn with `points="0,10 20,10 25,5 30,15 35,10 60,10 65,2 70,18 75,10 100,10"` in `text-space-turquoise opacity-50`.
+
+## Entrance Animation
+
+Each timeline entry uses `whileInView` so it only triggers when scrolled into the viewport:
+
+```jsx
+initial={{ opacity: 0, y: 20 }}
+whileInView={{ opacity: 1, y: 0 }}
+viewport={{ once: true, margin: "-100px" }}
+transition={{ delay: index * 0.1 }}
+```
+
+The `margin: "-100px"` means the animation fires when the element is 100px from the viewport edge, giving it a natural feel rather than triggering exactly at the fold. The `once: true` flag ensures each entry only animates in once per page load.
+
+## Status Badge Colors
+
+| Status      | `patchColor` Tailwind classes                       | Visual                          |
+|-------------|-----------------------------------------------------|---------------------------------|
+| `ACTIVE`    | `border-space-turquoise text-space-turquoise`       | Cyan border, cyan text, pulsing |
+| `COMPLETED` | `border-space-teal text-space-teal`                 | Teal border, teal text          |
+| `COMPLETED` | `border-space-white/50 text-space-white/50`         | Muted white border and text     |
+
+## Work History Entries
+
+### Entry 1 — Stellar Tech
+
+| Field     | Value                                |
+|-----------|--------------------------------------|
+| Role      | Senior Navigator (Frontend)          |
+| Company   | Stellar Tech                         |
+| Stardate  | 2022.4 - PRESENT                     |
+| Status    | `ACTIVE`                             |
+| Tech      | React, TypeScript, WebGL, Zustand    |
+
+**Debrief:** *Leading the UI expedition for a next-gen data visualization platform. Architected the core React component library, reducing render latency by 40%. Mentoring junior cadets in advanced React patterns.*
+
+---
+
+### Entry 2 — Nebula Systems
+
+| Field     | Value                                        |
+|-----------|----------------------------------------------|
+| Role      | Flight Engineer (Fullstack)                  |
+| Company   | Nebula Systems                               |
+| Stardate  | 2019.8 - 2022.3                              |
+| Status    | `COMPLETED`                                  |
+| Tech      | React, Node.js, PostgreSQL, Socket.io        |
+
+**Debrief:** *Maintained critical life-support systems (legacy PHP backend) while migrating the command interface to a modern React stack. Implemented real-time WebSocket telemetry.*
+
+---
+
+### Entry 3 — Orbit Media
+
+| Field     | Value                                  |
+|-----------|----------------------------------------|
+| Role      | Cadet Developer                        |
+| Company   | Orbit Media                            |
+| Stardate  | 2017.1 - 2019.7                        |
+| Status    | `COMPLETED`                            |
+| Tech      | JavaScript, HTML/CSS, jQuery, PHP      |
+
+**Debrief:** *First orbital insertion. Built responsive marketing sites and interactive campaign dashboards. Learned the harsh realities of cross-browser compatibility in the vacuum of IE11.*
+
+---
+
+## Tech Stack Chips
+
+Each chip is a `<span>` with the following classes:
+
+```jsx
+<span className="font-mono text-[10px] px-2 py-1 border border-space-white/10 rounded text-space-white/60 bg-space-white/5">
+  React
+</span>
+```
+
+The `font-mono` font (`Space Mono`) and the low-opacity styling deliberately echo terminal output, fitting the mission-log aesthetic.
+
+## Work Entry Data Shape
+
+```typescript
+interface WorkEntry {
+  id: number;
+  role: string;
+  company: string;
+  stardate: string;    // e.g. '2022.4 - PRESENT'
+  status: 'ACTIVE' | 'COMPLETED';
+  patchColor: string;  // Tailwind classes for border and text color
+  debrief: string;
+  tech: string[];
+}
+```
+
+<Note>
+  The `patchColor` field is a space-separated string of Tailwind utility classes (e.g., `"border-space-turquoise text-space-turquoise"`). It is applied directly to the mission patch badge `className`, so it controls both the badge border and the inner dot color via `bg-currentColor`.
+</Note>
+
+## Editing Work History
+
+<Steps>
+  <Step title="Locate the data array">
+    Find the `Kt` array in `assets/main.js` (search for `"Senior Navigator"` to jump there). Each object in the array is one timeline entry, rendered top-to-bottom in the order they appear in the array.
+  </Step>
+  <Step title="Update an existing entry">
+    Edit the `role`, `company`, `stardate`, `debrief`, and `tech` fields of the target object. Keep `stardate` in the `YYYY.M - YYYY.M` or `YYYY.M - PRESENT` format to maintain visual consistency with the other entries.
+  </Step>
+  <Step title="Add a new entry">
+    Append a new `WorkEntry` object to the `Kt` array. For an active role, set `status: 'ACTIVE'` and `patchColor: 'border-space-turquoise text-space-turquoise'` — this will automatically apply the `animate-pulse` glow to the patch badge. For a past role, use `status: 'COMPLETED'` with either teal or muted-white `patchColor`.
+  </Step>
+  <Step title="Reorder entries">
+    The timeline renders entries in array order (index 0 at the top). Reorder the objects in `Kt` to change the visual sequence. The `transition.delay` is computed as `index * 0.1` seconds, so reordering also changes the stagger timing.
+  </Step>
+</Steps>
+
+<Tip>
+  Use the fictional `stardate` format (`YEAR.MONTH`) to keep the space-mission aesthetic consistent. For example, June 2018 becomes `2018.6`. This format is purely cosmetic — no date parsing logic depends on it.
+</Tip>

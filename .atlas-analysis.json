@@ -1,0 +1,101 @@
+{
+  "projectType": "frontend",
+  "projectName": "Space Mission",
+  "projectDescription": "A space-themed personal developer portfolio SPA built with React, TypeScript, Framer Motion, and Tailwind CSS, featuring animated orbital visuals, scrolling journey timelines, an interactive skills constellation, a project star map, case studies, a blog, and a contact form.",
+  "theme": "aspen",
+  "primaryColor": "#22d3ee",
+  "lightColor": null,
+  "darkColor": "#020617",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/routing", "architecture/animation"]
+          }
+        ]
+      },
+      {
+        "tab": "Pages & Components",
+        "groups": [
+          {
+            "group": "Core Pages",
+            "pages": [
+              "pages/home",
+              "pages/about",
+              "pages/projects",
+              "pages/skills",
+              "pages/work"
+            ]
+          },
+          {
+            "group": "Content Pages",
+            "pages": [
+              "pages/case-studies",
+              "pages/blog",
+              "pages/testimonials",
+              "pages/contact"
+            ]
+          },
+          {
+            "group": "Shared Components",
+            "pages": [
+              "components/navigation",
+              "components/starfield",
+              "components/orbit-system",
+              "components/page-transition"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Customization",
+        "groups": [
+          {
+            "group": "Theming",
+            "pages": ["customization/colors", "customization/typography", "customization/tailwind"]
+          },
+          {
+            "group": "Content & Deployment",
+            "pages": ["customization/content-data", "customization/deployment"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Animated starfield background with parallax effect",
+    "Interactive 3D-like orbit system on the home page",
+    "Scroll-driven career journey timeline with planetary visuals",
+    "Draggable project star map with zoom controls",
+    "SVG skill constellation graph with hover interactions",
+    "Space-themed HUD UI components with cyan glow borders",
+    "Animated page transitions via Framer Motion AnimatePresence",
+    "Blog with signal-strength indicators and category icons",
+    "Space-themed contact form with transmission animation",
+    "Fully responsive with mobile navigation drawer",
+    "Monospace + serif font pairing (Space Mono + Fraunces)"
+  ],
+  "publicApiSurface": [
+    "Navigation routes: /, /about, /projects, /skills, /work, /case-studies, /case-studies/:slug, /blog, /blog/:slug, /testimonials, /contact",
+    "Component: <Starfield /> — animated canvas star background",
+    "Component: <OrbitSystem /> — interactive orbital diagram (home hero)",
+    "Component: <Navigation /> — fixed HUD-style top navigation bar",
+    "Component: <PageTransition /> — Framer Motion page wrapper",
+    "Data array: projects (Zt) — id, name, type, x, y, size, color, desc, stack",
+    "Data array: skills (_) — id, name, color, nodes[], connections[]",
+    "Data array: workHistory (Kt) — id, role, company, stardate, status, debrief, tech[]",
+    "Data array: caseStudies — id, codename, client, status, summary, outcome, tags[]",
+    "Data array: blogPosts (as) — id, title, slug, date, category, signal, excerpt",
+    "Data array: testimonials (cs) — id, name, role, text, x, y, delay",
+    "CSS utility class: .hud-border — HUD-style border with cyan glow and backdrop blur",
+    "Tailwind color tokens: space-navy (#020617), space-turquoise (#22d3ee), space-teal (#14b8a6), space-white (#f1f5f9), space-violet (#7c3aed)",
+    "Custom animation: animate-ping-slow — slow pulsing ring effect"
+  ]
+}

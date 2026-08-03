@@ -1,0 +1,136 @@
+---
+title: "PageTransition Component: Framer Motion Page Wrapper"
+sidebarTitle: "PageTransition"
+description: "PageTransition wraps every page in a Framer Motion animation that fades and slides content in on enter and out on exit, coordinated by AnimatePresence in the router."
+---
+
+The `PageTransition` component is a thin but essential wrapper that gives every page in Space Mission a consistent animated entrance and exit. It takes a single `children` prop and places its contents inside a Framer Motion `motion.div` configured with enter and exit variants — including a `blur` effect that gives the transition a cinematic, defocused quality. All the transition logic lives in one place, so changing the animation once updates every page simultaneously.
+
+## What It Does
+
+`PageTransition` wraps `children` in a `motion.div` with three animation states:
+
+| State | `opacity` | `scale` | `filter` |
+|---|---|---|---|
+| `initial` (entering, before mount) | `0` | `0.95` | `blur(10px)` |
+| `animate` (on screen) | `1` | `1` | `blur(0px)` |
+| `exit` (leaving) | `0` | `1.05` | `blur(10px)` |
+
+The `motion.div` also applies layout classes so it fills the full viewport height and sits above the Starfield background:
+
+```jsx
+className="min-h-screen pt-24 pb-12 px-4 md:px-8 relative z-10"
+```
+
+The `pt-24` top padding ensures page content clears the fixed `Navigation` bar.
+
+## Animation Values
+
+The transition uses a custom cubic-bezier easing curve that produces a natural deceleration — quick at the start, easing gently to rest:
+
+```jsx
+const PageTransition = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+    animate={{ opacity: 1, scale: 1,    filter: 'blur(0px)'  }}
+    exit={{    opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+    transition={{
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],   // custom ease-out cubic-bezier
+    }}
+    className="min-h-screen pt-24 pb-12 px-4 md:px-8 relative z-10"
+  >
+    {children}
+  </motion.div>
+);
+```
+
+<Note>
+The actual source uses `scale: 0.95` on enter and `scale: 1.05` on exit — a subtle zoom-in / zoom-out pair that makes the old page feel like it is receding into the background while the new page expands forward.
+</Note>
+
+## AnimatePresence and the Router
+
+`PageTransition` on its own only defines the animation; it is `AnimatePresence` in the router that tells Framer Motion *when* to run the exit animation. Without `AnimatePresence`, leaving components are unmounted immediately and the `exit` variant never fires.
+
+The router wraps the route outlet in `<AnimatePresence mode='wait'>`, which ensures the exiting page fully finishes its exit animation before the entering page starts its enter animation — preventing both pages from being visible at the same time:
+
+```jsx
+import { AnimatePresence } from 'framer-motion';
+import { useLocation, Routes, Route } from 'react-router-dom';
+
+const App = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/"            element={<HomePage />} />
+        <Route path="/about"       element={<AboutPage />} />
+        <Route path="/projects"    element={<ProjectsPage />} />
+        {/* … remaining routes */}
+      </Routes>
+    </AnimatePresence>
+  );
+};
+```
+
+The `key={location.pathname}` prop is what triggers `AnimatePresence` to detect a route change — without it, React would reuse the existing component tree and no transition would play.
+
+## Usage
+
+Every page component wraps its top-level content in `PageTransition`:
+
+```jsx
+import { PageTransition } from '../components/PageTransition';
+
+const AboutPage = () => (
+  <PageTransition>
+    <div className="max-w-6xl mx-auto">
+      {/* page content */}
+    </div>
+  </PageTransition>
+);
+
+export default AboutPage;
+```
+
+<Tip>
+Because `PageTransition` already applies `min-h-screen`, `pt-24`, and horizontal padding, you do not need to repeat these classes on the inner `div`. Simply place your page-specific layout container directly as a child.
+</Tip>
+
+## Customizing the Transition
+
+**Duration.** Change the `duration` value (in seconds). The current `0.6` is a good balance between snappy and cinematic; values above `1.0` can feel sluggish during quick navigation.
+
+```jsx
+transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+```
+
+**Easing.** Replace the cubic-bezier array with a named Framer Motion easing string:
+
+```jsx
+transition={{ duration: 0.5, ease: 'easeOut' }}
+// or a spring:
+transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+```
+
+**Adding a vertical slide.** To combine the blur-scale effect with a `y` offset (similar to a classic fade-up):
+
+```jsx
+initial={{ opacity: 0, scale: 0.95, y: 20,  filter: 'blur(10px)' }}
+animate={{ opacity: 1, scale: 1,    y: 0,   filter: 'blur(0px)'  }}
+exit={{    opacity: 0, scale: 1.05, y: -20, filter: 'blur(10px)' }}
+```
+
+**Removing the blur.** Set `filter` to `'blur(0px)'` in all three states, or omit the `filter` key entirely:
+
+```jsx
+initial={{ opacity: 0, scale: 0.95 }}
+animate={{ opacity: 1, scale: 1    }}
+exit={{    opacity: 0, scale: 1.05 }}
+```
+
+<Note>
+Removing `PageTransition` from a page — or forgetting to wrap a new page — will cause that route to appear and disappear instantly without any animation, which creates a jarring visual discontinuity next to the other pages that do animate. Always wrap new pages in `<PageTransition>`.
+</Note>

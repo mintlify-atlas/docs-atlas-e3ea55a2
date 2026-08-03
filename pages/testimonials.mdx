@@ -1,0 +1,173 @@
+---
+title: "Testimonials (SIGNALS): Floating Commendation Cards"
+sidebarTitle: "Testimonials"
+description: "The Testimonials page displays decrypted commendations as floating HUD cards positioned at absolute coordinates on a full-viewport canvas, with slow floating animation and signal wave on hover."
+---
+
+The **Testimonials** page — labelled `SIGNALS` in the HUD — presents peer and client commendations as if they were incoming transmissions drifting through deep space. Rather than a conventional scrollable list, each testimonial card floats freely on a full-viewport dark canvas, positioned at absolute percentage coordinates so the layout feels organic and non-linear. Hovering over a card triggers a subtle scale-up and a signal-wave animation, reinforcing the idea of a live signal locking on.
+
+## Page Layout
+
+The page uses a `position: relative` full-viewport container (`100vw × 100vh`) with the Starfield component rendering behind it. A header block anchored to the top-left corner displays the section title and a brief descriptor. Each testimonial card is then placed with `position: absolute`, using the `x` and `y` fields as `left` and `top` percentage values respectively:
+
+```jsx
+<motion.div
+  style={{
+    position: 'absolute',
+    left: `${testimonial.x}%`,
+    top:  `${testimonial.y}%`,
+  }}
+  // ...
+/>
+```
+
+<Note>
+  On small viewports some cards may overlap or clip near the edges. The `x` and `y` values are percentages of the viewport, so repositioning a card for a narrower breakpoint is as simple as updating its coordinates in the data array.
+</Note>
+
+## Card Anatomy
+
+Each floating card displays the following elements in order:
+
+| Element | Description |
+|---|---|
+| **RCVD FROM** | Small all-caps label acting as the card's header — signals the card is an inbound transmission |
+| **Sender name** | Testimonial author's name in larger weight text |
+| **Role** | Job title and organisation (formatted as `Role @ Organisation`) |
+| **Quote text** | Full commendation text in italic prose |
+| **SIG_VERIFIED** | Small monospace footer label indicating the signal has been authenticated |
+| **Signal bars** | Animated bar meter that appears on hover, visually identical to the blog signal bars |
+
+The card's HUD border (cyan outline with corner bracket accents) matches the visual language used on case study cards and modal overlays throughout the portfolio.
+
+## Animation
+
+Card animations are driven by **Framer Motion** and operate in two modes:
+
+### Floating (ambient)
+
+Every card continuously oscillates on the Y axis to simulate weightlessness in orbit. The `animate` prop runs an infinite looping sequence:
+
+```jsx
+animate={{ y: [0, -20, 0] }}
+transition={{
+  duration: 4,
+  repeat: Infinity,
+  ease: 'easeInOut',
+  delay: testimonial.delay,   // staggers cards so they don't move in sync
+}}
+```
+
+The `delay` field in each testimonial object staggers the start of the float cycle, so the four cards drift independently rather than rising and falling together.
+
+### Hover
+
+When the pointer enters a card, Framer Motion's `whileHover` prop applies two changes simultaneously:
+
+```jsx
+whileHover={{ scale: 1.05, zIndex: 50 }}
+```
+
+- `scale: 1.05` — enlarges the card slightly to bring it "forward" from the canvas
+- `zIndex: 50` — lifts the hovered card above any overlapping neighbours
+
+The signal-bar animation inside the card also becomes visible on hover via a CSS `opacity` transition (`0 → 1`).
+
+## Current Testimonials
+
+The four commendations defined in the data array, with their canvas coordinates and animation delays:
+
+| ID | Name | Role | x (left %) | y (top %) | Delay (s) |
+|---|---|---|---|---|---|
+| 1 | Sarah Connor | Lead Architect @ Skynet | 10 | 20 | 0 |
+| 2 | Ellen Ripley | Product Manager @ Weyland | 50 | 10 | 2 |
+| 3 | David Bowman | Mission Commander @ Discovery | 20 | 60 | 1 |
+| 4 | Cooper | Pilot @ Endurance | 60 | 50 | 3 |
+
+### Quote Texts
+
+- **Sarah Connor** — "An exceptional navigator of code. Saved our project from total structural collapse during the final phase."
+- **Ellen Ripley** — "Communicates clearly across the void. Delivered the UI components ahead of schedule despite hostile API conditions."
+- **David Bowman** — "I am completely operational, and all my circuits are functioning perfectly, thanks to their robust error handling."
+- **Cooper** — "They understand that time is a resource. Optimized our render cycles to save us years of loading screens."
+
+## Data Shape
+
+Each testimonial conforms to the following TypeScript interface:
+
+```typescript
+interface Testimonial {
+  id: number;
+  name: string;
+  role: string;
+  text: string;
+  x: number;     // % from left edge of the viewport canvas
+  y: number;     // % from top edge of the viewport canvas
+  delay: number; // animation start delay in seconds (staggers the float cycle)
+}
+```
+
+The full data array:
+
+```typescript
+const testimonials: Testimonial[] = [
+  {
+    id: 1,
+    name: 'Sarah Connor',
+    role: 'Lead Architect @ Skynet',
+    text: 'An exceptional navigator of code. Saved our project from total structural collapse during the final phase.',
+    x: 10, y: 20, delay: 0,
+  },
+  {
+    id: 2,
+    name: 'Ellen Ripley',
+    role: 'Product Manager @ Weyland',
+    text: 'Communicates clearly across the void. Delivered the UI components ahead of schedule despite hostile API conditions.',
+    x: 50, y: 10, delay: 2,
+  },
+  {
+    id: 3,
+    name: 'David Bowman',
+    role: 'Mission Commander @ Discovery',
+    text: 'I am completely operational, and all my circuits are functioning perfectly, thanks to their robust error handling.',
+    x: 20, y: 60, delay: 1,
+  },
+  {
+    id: 4,
+    name: 'Cooper',
+    role: 'Pilot @ Endurance',
+    text: 'They understand that time is a resource. Optimized our render cycles to save us years of loading screens.',
+    x: 60, y: 50, delay: 3,
+  },
+];
+```
+
+## Adding or Repositioning Testimonials
+
+### Adding a new testimonial
+
+Append a new object to the `testimonials` array with a unique `id`, the author's details, and a canvas position that avoids heavy overlap with existing cards:
+
+```typescript
+{
+  id: 5,
+  name: 'Riddick',
+  role: 'Security Consultant @ Crematoria',
+  text: 'Precision under pressure. Delivered a bulletproof auth flow with zero regressions.',
+  x: 75,     // % from left — try values between 5 and 85 to stay on-screen
+  y: 35,     // % from top  — try values between 5 and 75
+  delay: 1.5, // seconds — use a value not already claimed to keep floats staggered
+},
+```
+
+### Repositioning an existing card
+
+Change the `x` and `y` values of the target entry. Use the browser's DevTools to preview the result at your target viewport width, as percentage positions are viewport-relative.
+
+<Tip>
+  To create a visually balanced layout, spread cards across all four quadrants of the canvas and avoid placing two cards with the same `y` value — they will collide on mid-width screens. Keep `delay` values at least 0.5 seconds apart to maintain the staggered-drift effect.
+</Tip>
+
+### Adjusting float amplitude
+
+The Y-oscillation distance (`[0, -20, 0]`) is hardcoded in the `animate` prop. To make cards drift more or less dramatically, change `−20` to a larger or smaller negative pixel value (e.g., `−8` for subtle drift, `−40` for exaggerated float).

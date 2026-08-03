@@ -1,0 +1,209 @@
+---
+title: "Routing in Space Mission: React Router v6 with Hash Routing"
+sidebarTitle: "Routing"
+description: "Space Mission uses React Router v6 with hash-based navigation for static hosting compatibility. Learn the route structure, static HTML shells, and how to add new routes."
+---
+
+Space Mission uses **React Router v6** for all client-side navigation. Because the site is deployed as a static bundle on GitHub Pages — a host with no server-side URL rewriting — the router is configured with **hash-based history**. Every URL takes the form `https://username.github.io/space-mission/#/about` rather than a clean pathname. The hash fragment is parsed entirely by the browser, so no server request is made when the route changes.
+
+---
+
+## Route Table
+
+The full route manifest lives in the `<Routes>` block inside `assets/main.js`. Each route maps a path to a page component and a themed HUD designation shown in the navigation bar.
+
+| Path | Component | HUD Label | Description |
+|---|---|---|---|
+| `/` | `<Home>` | `SYS_CORE` | Solar system home page with orbiting planet links |
+| `/about` | `<About>` | `ORIGIN` | Scroll-driven career journey across four height-viewports |
+| `/projects` | `<Projects>` | `STAR_MAP` | Draggable, zoomable star map of projects |
+| `/skills` | `<Skills>` | `CONSTELLATIONS` | Interactive skill constellation graph |
+| `/work` | `<Work>` | `LOGS` | Vertical mission log / work history timeline |
+| `/case-studies` | `<CaseStudies>` | `ARCHIVE` | Grid of case study cards |
+| `/case-studies/:slug` | `<CaseStudyDetail>` | — | Individual case study article |
+| `/blog` | `<Blog>` | `TRANSMISSIONS` | Blog post list |
+| `/blog/:slug` | `<BlogDetail>` | — | Individual blog post |
+| `/testimonials` | `<Testimonials>` | `SIGNALS` | Floating, animated testimonial cards |
+| `/contact` | `<Contact>` | `COMMS` | Contact form with submission state |
+
+The navigation bar is populated from the `Uo` routes array defined in `components/Navigation.js`:
+
+```js
+const routes = [
+  { path: "/",             label: "SYS_CORE" },
+  { path: "/about",        label: "ORIGIN" },
+  { path: "/projects",     label: "STAR_MAP" },
+  { path: "/skills",       label: "CONSTELLATIONS" },
+  { path: "/work",         label: "LOGS" },
+  { path: "/case-studies", label: "ARCHIVE" },
+  { path: "/blog",         label: "TRANSMISSIONS" },
+  { path: "/testimonials", label: "SIGNALS" },
+  { path: "/contact",      label: "COMMS" },
+];
+```
+
+---
+
+## Router Setup
+
+The application root (`App`) wraps everything in React Router's hash-based provider. `AnimatePresence` sits directly inside the router so Framer Motion can coordinate page exit animations before the next page mounts. The `location` key on `AnimatePresence`'s child ensures React treats each route change as a distinct component tree, which triggers the `exit` animation on the outgoing page.
+
+```jsx
+// Simplified from assets/main.js
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/"                  element={<Home />} />
+        <Route path="/about"             element={<About />} />
+        <Route path="/projects"          element={<Projects />} />
+        <Route path="/skills"            element={<Skills />} />
+        <Route path="/work"              element={<Work />} />
+        <Route path="/case-studies"      element={<CaseStudies />} />
+        <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
+        <Route path="/blog"              element={<Blog />} />
+        <Route path="/blog/:slug"        element={<BlogDetail />} />
+        <Route path="/contact"           element={<Contact />} />
+        <Route path="/testimonials"      element={<Testimonials />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <HashRouter>
+      <div className="relative min-h-screen bg-space-navy text-space-white">
+        <Starfield />
+        <Navigation />
+        <AppRoutes />
+      </div>
+    </HashRouter>
+  );
+}
+```
+
+`AnimatePresence mode="wait"` ensures the exiting page fully completes its exit animation before the entering page begins its entrance animation — critical for the blur/scale page transition effect in `<PageTransition>`.
+
+---
+
+## Static HTML Shells
+
+GitHub Pages serves static files. Navigating directly to a URL like `https://username.github.io/space-mission/pages/About.html` would normally give a blank React shell with no route loaded. The `pages/` directory solves this with dedicated HTML shells for each route.
+
+Each shell does two things:
+
+1. Sets `window.__STATIC_PAGE_ROUTE__` to the intended path so the app knows which route to activate.
+2. Checks `window.location.hash` and, if it's empty or just `#/`, rewrites it to the correct hash route — causing React Router to load the right page on boot.
+
+```html
+<!-- pages/About.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About | space-mission</title>
+
+    <script type="module" crossorigin src="../assets/main.js"></script>
+    <link rel="modulepreload" crossorigin href="../assets/proxy.js">
+    <link rel="modulepreload" crossorigin href="../assets/index.js">
+    <link rel="stylesheet" crossorigin href="../assets/main.css">
+
+    <script>
+      window.__STATIC_PAGE_ROUTE__ = "/about";
+      if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+        window.location.hash = "/about";
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+```
+
+The same `main.js` bundle is loaded in every shell — the whole SPA is always available. Only the hash fragment differs.
+
+---
+
+## How to Add a New Route
+
+<Steps>
+
+### Create the page component
+
+Add a new component in `assets/main.js` (or a separate source file before bundling). Wrap its return value in `<PageTransition>` to get the standard enter/exit animation for free.
+
+```jsx
+const CrewPage = () => {
+  return (
+    <PageTransition>
+      <div className="max-w-4xl mx-auto py-12">
+        <header className="mb-12">
+          <h1 className="font-serif text-4xl mb-2">Crew Manifest</h1>
+          <p className="font-mono text-sm text-space-white/50">
+            MISSION PERSONNEL // ACTIVE
+          </p>
+        </header>
+        {/* page content */}
+      </div>
+    </PageTransition>
+  );
+};
+```
+
+### Register the route in `<Routes>`
+
+Add a `<Route>` entry inside the `<Routes>` block in `AppRoutes`:
+
+```jsx
+<Route path="/crew" element={<CrewPage />} />
+```
+
+### Add the nav entry
+
+Append the new path and HUD label to the routes array in `components/Navigation.js`:
+
+```js
+const routes = [
+  // ...existing routes...
+  { path: "/crew", label: "PERSONNEL" },
+];
+```
+
+### Create the static HTML shell
+
+Copy any existing shell from `pages/` and update the title, `window.__STATIC_PAGE_ROUTE__`, and the hash assignment:
+
+```html
+<!-- pages/Crew.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Crew | space-mission</title>
+    <script type="module" crossorigin src="../assets/main.js"></script>
+    <link rel="modulepreload" crossorigin href="../assets/proxy.js">
+    <link rel="modulepreload" crossorigin href="../assets/index.js">
+    <link rel="stylesheet" crossorigin href="../assets/main.css">
+    <script>
+      window.__STATIC_PAGE_ROUTE__ = "/crew";
+      if (!window.location.hash || window.location.hash === "#/" || window.location.hash === "#") {
+        window.location.hash = "/crew";
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+```
+
+### Rebuild and deploy
+
+Run `vite build` to regenerate `assets/main.js`, then push to the `main` branch. GitHub Pages will pick up the new shell and serve the updated bundle.
+
+</Steps>

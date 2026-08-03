@@ -1,0 +1,166 @@
+---
+title: "Case Studies (ARCHIVE): In-Depth Project Mission Reports"
+sidebarTitle: "Case Studies"
+description: "The Case Studies page displays a grid of mission report cards linking to detailed write-ups. Each case study includes a codename, client, status badge, sector, summary, and outcome metrics."
+---
+
+The **Case Studies** page — labelled `ARCHIVE` in the app's HUD vocabulary — presents a grid of classified mission dossiers, each representing a real-world engineering engagement. Visitors can scan high-level outcome metrics on the archive cards and then drill into a full-page mission report for deeper technical context. Every card is styled with the project's signature HUD border treatment, reinforcing the classified-ops aesthetic throughout.
+
+## Page Layout
+
+The archive renders as a responsive grid of mission-report cards. Each card is framed by a glowing HUD border (a thin cyan outline with corner bracket accents) that ties it visually to the rest of the portfolio's interface language. Clicking any card navigates to the detail route `/case-studies/:slug`, where `:slug` corresponds to the case study's `id` field.
+
+```
+/case-studies           → archive grid (all cards)
+/case-studies/:slug     → detail page for a single mission (slug = id)
+```
+
+<Note>
+  The router uses React Router's hash-based strategy. The static entry point `pages/CaseStudies.html` sets `window.__STATIC_PAGE_ROUTE__ = "/case-studies"` so the SPA can hydrate correctly on direct load.
+</Note>
+
+## Card Anatomy
+
+Each mission-report card surfaces the following fields at a glance:
+
+| Element | Description |
+|---|---|
+| **CODENAME** | All-caps mission title rendered as the card's primary heading |
+| **Client** | Organisation name displayed beneath the codename |
+| **STATUS badge** | Colour-coded pill: green for `SUCCESS`, blue for `COMPLETED`, yellow for `IN_PROGRESS` |
+| **Sector tag** | Domain label (e.g. "Frontend Architecture") shown as a small inline tag |
+| **Summary** | One-to-two sentence plain-English description of the engagement |
+| **Outcome metric** | Concise quantified result (e.g. "Load time reduced by 60%") |
+| **Tags** | Horizontal row of technology pills at the card footer |
+
+## Current Case Studies
+
+The following three missions are defined in the data array at the top of the `CaseStudies` page component:
+
+| # | Codename | Client | Status | Sector | Outcome |
+|---|---|---|---|---|---|
+| 1 | OPERATION NEBULA | Stellar Tech | SUCCESS | Frontend Architecture | Load time reduced by 60%, 12k lines removed |
+| 2 | DEEP SPACE RELAY | Nebula Systems | SUCCESS | Full-Stack Migration | API response improved 45%, deployed 8 microservices |
+| 3 | PROJECT QUASAR | Orbit Media | COMPLETED | Data Visualization | 50M+ events visualized in real-time |
+
+<CardGroup cols={3}>
+  <Card title="OPERATION NEBULA" icon="rocket">
+    **Stellar Tech** · Frontend Architecture
+
+    Rebuilt a legacy dashboard from scratch using React and TypeScript, reducing load time by 60% and eliminating 12k lines of jQuery.
+
+    `React` `TypeScript` `Performance`
+  </Card>
+  <Card title="DEEP SPACE RELAY" icon="network-wired">
+    **Nebula Systems** · Full-Stack Migration
+
+    Led the migration of a monolithic PHP application to a Node.js microservices architecture, improving API response times by 45%.
+
+    `Node.js` `PostgreSQL` `Microservices`
+  </Card>
+  <Card title="PROJECT QUASAR" icon="chart-bar">
+    **Orbit Media** · Data Visualization
+
+    Designed and built an interactive real-time analytics dashboard visualizing 50M+ daily events using D3.js and WebSockets.
+
+    `D3.js` `WebSockets` `React`
+  </Card>
+</CardGroup>
+
+## Detail Page (`/case-studies/:slug`)
+
+Navigating to a case study card opens the full mission dossier at `/case-studies/:slug`. The detail page is rendered from the same data array — it looks up the entry whose `id` matches the slug extracted via React Router's `useParams`. The detail view includes:
+
+- The full **CODENAME** as the hero heading
+- **Client**, **status badge**, and **sector tag** in a metadata row
+- Full **summary** paragraph
+- Highlighted **outcome** metric in a call-out block
+- Complete **tags** list
+- A **← BACK TO ARCHIVE** button that calls `navigate(-1)` to return to the grid
+
+<Note>
+  If an unknown slug is provided (i.e., no matching `id` in the array), the detail page renders a "MISSION NOT FOUND" fallback state rather than crashing.
+</Note>
+
+## Data Shape
+
+Each case study object conforms to the following TypeScript interface, defined inline within the page component file:
+
+```typescript
+interface CaseStudy {
+  id: string;
+  codename: string;
+  client: string;
+  status: 'SUCCESS' | 'COMPLETED' | 'IN_PROGRESS';
+  sector: string;
+  summary: string;
+  outcome: string;
+  tags: string[];
+}
+```
+
+The full data array looks like this:
+
+```typescript
+const caseStudies: CaseStudy[] = [
+  {
+    id: '1',
+    codename: 'OPERATION NEBULA',
+    client: 'Stellar Tech',
+    status: 'SUCCESS',
+    sector: 'Frontend Architecture',
+    summary:
+      'Rebuilt a legacy dashboard from scratch using React and TypeScript, ' +
+      'reducing load time by 60% and eliminating 12k lines of jQuery.',
+    outcome: 'Load time reduced by 60%, 12k lines removed',
+    tags: ['React', 'TypeScript', 'Performance'],
+  },
+  {
+    id: '2',
+    codename: 'DEEP SPACE RELAY',
+    client: 'Nebula Systems',
+    status: 'SUCCESS',
+    sector: 'Full-Stack Migration',
+    summary:
+      'Led the migration of a monolithic PHP application to a Node.js ' +
+      'microservices architecture, improving API response times by 45%.',
+    outcome: 'API response improved 45%, deployed 8 microservices',
+    tags: ['Node.js', 'PostgreSQL', 'Microservices'],
+  },
+  {
+    id: '3',
+    codename: 'PROJECT QUASAR',
+    client: 'Orbit Media',
+    status: 'COMPLETED',
+    sector: 'Data Visualization',
+    summary:
+      'Designed and built an interactive real-time analytics dashboard ' +
+      'visualizing 50M+ daily events using D3.js and WebSockets.',
+    outcome: '50M+ events visualized in real-time',
+    tags: ['D3.js', 'WebSockets', 'React'],
+  },
+];
+```
+
+## Adding a New Case Study
+
+Adding a mission to the archive requires only one step: append a new object to the `caseStudies` array.
+
+```typescript
+{
+  id: '4',                          // Must be unique; also becomes the URL slug
+  codename: 'MISSION AURORA',
+  client: 'Polaris Corp',
+  status: 'SUCCESS',                // 'SUCCESS' | 'COMPLETED' | 'IN_PROGRESS'
+  sector: 'Mobile Development',
+  summary: 'Brief description of the engagement and technical approach.',
+  outcome: 'Key quantified result here',
+  tags: ['React Native', 'Expo'],
+},
+```
+
+<Tip>
+  The `id` field doubles as the URL slug for the detail page. Use short, numeric strings (`'4'`, `'5'`, …) or human-readable slugs (`'aurora'`) — just keep them unique across the array. The detail page lookup is a strict `===` match against `id`.
+</Tip>
+
+No changes to the router or any other file are needed — the archive grid and detail page both read from the same array at runtime.

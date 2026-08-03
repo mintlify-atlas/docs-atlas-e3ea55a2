@@ -1,0 +1,117 @@
+---
+title: "Typography: Space Mono, Fraunces, and Inter in Space Mission"
+sidebarTitle: "Typography"
+description: "Space Mission uses three Google Fonts: Space Mono for code and labels, Fraunces for headings, and Inter for body text, each with specific Tailwind utility classes."
+---
+
+Space Mission's typographic system pairs three Google Fonts to create the layered feel of a sci-fi interface. **Inter** provides the clean, neutral backbone for body text and descriptions. **Fraunces** — a variable serif with wide optical sizing — lends an unexpected, editorial weight to every heading. **Space Mono** reinforces the technology theme across HUD labels, navigation links, form fields, and any inline code, with its fixed-width characters echoing terminal readouts and cockpit displays. Each typeface maps to a Tailwind `font-*` utility, making the system easy to apply and easy to change.
+
+## Font Details
+
+| Font | Family | Weights Loaded | Usage | Tailwind Class |
+|---|---|---|---|---|
+| Space Mono | Monospace | 400, 700 (regular + italic for both) | HUD labels, nav links, code blocks, form field labels | `font-mono` |
+| Fraunces | Serif, variable (optical size 9–144) | 100–900, italic | All `h1`–`h6` headings | `font-serif` |
+| Inter | Sans-serif, variable | 100–900 | Body text, descriptions, prose paragraphs | `font-sans` |
+
+## Google Fonts Import
+
+Both fonts are loaded via a single `@import` at the very top of `assets/main.css`, before Tailwind's own directives. This ensures the fonts are available as soon as the stylesheet parses.
+
+```css
+@import "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter:wght@100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap";
+```
+
+The query string requests:
+
+- **Fraunces** — both upright and italic, across the full optical-size axis (9–144) and the full weight axis (100–900). This allows CSS `font-variation-settings` to fine-tune the display size optically without loading separate font files.
+- **Inter** — the full weight range (100–900) in a single variable font, covering everything from thin hero subtitles to bold call-to-action text.
+- **Space Mono** — four discrete files: regular 400, bold 700, italic 400, and italic 700. Space Mono is not variable, so each weight and style is a separate request.
+- **`display=swap`** — instructs browsers to render fallback fonts immediately and swap to the loaded font once available, preventing invisible text during loading.
+
+<Tip>
+  If you self-host fonts (for GDPR compliance or to reduce third-party requests), download the font files from [Google Fonts](https://fonts.google.com) and replace the `@import` with `@font-face` declarations pointing to your own CDN or `/public` folder. Update the `fontFamily` keys in `tailwind.config.js` to match.
+</Tip>
+
+## Heading Styles
+
+All six heading levels (`h1` through `h6`) share a single baseline rule applied in the `@layer base` section of `main.css`:
+
+```css
+h1, h2, h3, h4, h5, h6 {
+  font-family: Fraunces, serif;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+}
+```
+
+A few things stand out here:
+
+- **`font-weight: 400`** — Fraunces at regular weight already carries considerable visual mass due to its optical-size axis and high-contrast thick/thin strokes. Using 400 rather than 700 keeps headings sophisticated rather than heavy.
+- **`letter-spacing: 0.025em`** — A small positive tracking (`tracking-tight` in Tailwind vocabulary) provides a touch of air between glyphs, reinforcing the editorial character of the typeface at display sizes.
+- The `font-serif` utility class (`font-family: Fraunces, serif`) can also be applied manually to any element that needs the Fraunces treatment outside of semantic heading tags.
+
+## Monospace Usage Examples
+
+`font-mono` (Space Mono) appears in three main contexts across the portfolio:
+
+**Navigation labels** — The nav links in the sidebar and mobile drawer are set in Space Mono with `uppercase` and `tracking-widest` to create the look of a console command palette:
+
+```tsx
+<span className="font-mono uppercase tracking-widest text-xs text-space-white/60">
+  ABOUT
+</span>
+```
+
+**Form field labels** — Contact form field labels use `text-xs font-mono` to distinguish them as data-entry identifiers rather than prose:
+
+```tsx
+<label className="font-mono text-xs text-space-white/60 uppercase tracking-wider">
+  Your Message
+</label>
+```
+
+**HUD status text** — Inline status badges, section counters, and technical callout lines use Space Mono to visually separate metadata from body copy:
+
+```tsx
+<p className="font-mono text-[10px] text-space-turquoise uppercase tracking-widest">
+  SYSTEM ONLINE — 2024
+</p>
+```
+
+<Note>
+  Space Mono is a fixed-width font, which means every character occupies the same horizontal space. This makes it ideal for aligning columns of text or numbers in HUD-style layouts, but it will consume more horizontal space than Inter at the same `font-size`. Adjust `text-xs` or `text-[10px]` as needed in tighter layouts.
+</Note>
+
+## Swapping Fonts
+
+To replace any of the three typefaces, make two changes in tandem:
+
+**1. Update the Google Fonts import URL** in `assets/main.css` (or your source CSS entry point) to include the new family:
+
+```css
+@import "https://fonts.googleapis.com/css2?family=YourNewFont:wght@400;700&display=swap";
+```
+
+**2. Update the `fontFamily` extension** in `tailwind.config.js` so Tailwind's utility classes resolve to the new font:
+
+```js
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      fontFamily: {
+        mono: ['YourNewFont', 'monospace'], // replaces Space Mono
+        serif: ['Fraunces', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+};
+```
+
+Then rebuild with `npm run build`. Every element using `font-mono` will immediately adopt the new typeface because the Tailwind utility class simply maps to the value in the config.
+
+<Tip>
+  If you swap Fraunces for another serif, revisit the heading rule in `main.css` and consider adjusting `font-weight` and `letter-spacing` — different typefaces have different optical densities at `400` weight.
+</Tip>

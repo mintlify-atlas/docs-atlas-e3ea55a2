@@ -1,0 +1,188 @@
+---
+title: "Contact Page (COMMS): Open Channel Form and Relay Links"
+sidebarTitle: "Contact"
+description: "The Contact page features a space-themed transmission form with scanline overlay, field labels as radio callsigns, an animated send state, and social relay station links for email, GitHub, and LinkedIn."
+---
+
+The **Contact** page — labelled `COMMS` in the HUD — simulates an open radio channel between the visitor and mission control. Rather than a plain web form, the interface dresses each field as a transmission parameter: the sender's name becomes an identification callsign, the reply address becomes a return frequency, and the message body becomes the payload. A CRT scanline overlay adds a retro-terminal texture to the entire form panel, and a multi-state send animation turns form submission into a miniature launch sequence.
+
+## Two-Column Layout
+
+The page is divided into two side-by-side panels:
+
+| Column | Content |
+|---|---|
+| **Left — Transmission Form** | The main contact form with three labelled fields, a submit button, and the scanline overlay |
+| **Right — Relay Stations** | A sidebar listing direct contact links (email, GitHub, LinkedIn) formatted as named relay stations |
+
+On narrow viewports the columns stack vertically, with the form appearing first and the relay stations beneath it.
+
+## Form Fields
+
+All three fields are required. They use a monospace font and render on a dark navy (`#020617`) background to mimic a terminal interface:
+
+| HUD Label | HTML field | Type | Description |
+|---|---|---|---|
+| `IDENTIFICATION` | `name` | `text` | Sender's full name |
+| `RETURN FREQUENCY` | `email` | `email` | Reply-to email address |
+| `PAYLOAD` | `message` | `textarea` | Message body |
+
+```jsx
+<label className="font-mono text-cyan-400 text-xs tracking-widest">
+  IDENTIFICATION
+</label>
+<input
+  type="text"
+  name="name"
+  required
+  className="bg-[#020617] font-mono text-slate-100 border border-slate-700
+             focus:border-cyan-400 focus:outline-none"
+/>
+```
+
+## Form States
+
+The submit button and the area beneath the form cycle through three states driven by a `status` piece of React state (`'idle' | 'sending' | 'sent'`):
+
+### `idle`
+Default state. The submit button reads **TRANSMIT** with a paper-plane icon. The form is fully interactive.
+
+### `sending`
+Triggered immediately on submit (after `event.preventDefault()`). The button is disabled and its label switches to **ENCRYPTING…** with a spinning lock icon. The form fields become read-only. A brief encrypted-character animation runs across the button text to simulate in-progress signal encoding.
+
+### `sent`
+Set after the (simulated) 2-second delay resolves. The entire form area is replaced by a success panel:
+
+- A `Terminal` icon centred at the top
+- The heading **TRANSMISSION SENT**
+- A subline noting an approximate **~24 hour** response time
+- A **SEND ANOTHER** button that resets `status` back to `'idle'` and clears all field values
+
+```jsx
+{status === 'sent' ? (
+  <div className="flex flex-col items-center gap-4 py-12">
+    <Terminal className="text-cyan-400 w-12 h-12" />
+    <h3 className="font-mono text-cyan-400 tracking-widest">TRANSMISSION SENT</h3>
+    <p className="text-slate-400 text-sm">Expect a response within ~24 hours.</p>
+    <button onClick={() => setStatus('idle')} className="...">
+      SEND ANOTHER
+    </button>
+  </div>
+) : (
+  /* form markup */
+)}
+```
+
+<Note>
+  The current implementation simulates the send with a `setTimeout` of 2000 ms and never dispatches a real HTTP request. See the [Form Submission](#form-submission) section below for how to wire it up to a real backend.
+</Note>
+
+## Relay Stations Sidebar
+
+The right column lists three direct-contact shortcuts styled as named relay stations. Each entry has an icon, a station label, and a clickable link:
+
+| Station | Icon | Link |
+|---|---|---|
+| **Email Relay** | `Mail` (Lucide React) | `mailto:` address |
+| **GitHub Beacon** | `Github` (Lucide React) | GitHub profile URL |
+| **LinkedIn Array** | `Linkedin` (Lucide React) | LinkedIn profile URL |
+
+Each relay station card shares the same HUD border styling as the rest of the portfolio and opens its link in a new tab (`target="_blank" rel="noopener noreferrer"`).
+
+## Scanline Overlay
+
+The form panel carries a full-coverage CRT scanline effect implemented entirely in CSS. A pseudo-element (or an absolutely positioned `<div>` with `pointer-events: none`) is layered over the form using the following gradient:
+
+```css
+.scanline-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;   /* each scanline is 4 px tall */
+  z-index: 10;
+}
+```
+
+The `background-size: 100% 4px` causes the gradient to repeat every 4 pixels, creating evenly spaced horizontal bands. The overlay does not interfere with form interaction because `pointer-events: none` lets all mouse and keyboard events pass through to the underlying inputs.
+
+## Updating Contact Link URLs
+
+The relay station links are hardcoded values in the `Contact` page component. To update them, locate the relay stations data array near the top of the file and edit the `href` fields:
+
+```typescript
+const relayStations = [
+  {
+    label: 'Email Relay',
+    icon: Mail,
+    href: 'mailto:your-email@example.com',   // ← update this
+  },
+  {
+    label: 'GitHub Beacon',
+    icon: Github,
+    href: 'https://github.com/your-handle',  // ← update this
+  },
+  {
+    label: 'LinkedIn Array',
+    icon: Linkedin,
+    href: 'https://linkedin.com/in/your-profile', // ← update this
+  },
+];
+```
+
+<Tip>
+  Keep the `mailto:` prefix on the email link so browsers open the user's default mail client directly. Removing it will cause the browser to navigate to a broken URL.
+</Tip>
+
+## Form Submission
+
+The contact form currently prevents default browser submission and simulates a network round-trip with a two-second timeout:
+
+```typescript
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  setStatus('sending');
+
+  // ⚠️ Simulated delay — replace with a real API call
+  setTimeout(() => {
+    setStatus('sent');
+  }, 2000);
+};
+```
+
+To make the form functional, replace the `setTimeout` with a real asynchronous call. Three common options are:
+
+<CardGroup cols={3}>
+  <Card title="Formspree" icon="paper-plane">
+    POST to a Formspree endpoint with `fetch`. No backend required — Formspree forwards submissions to your email inbox.
+
+    ```bash
+    # No install needed; use fetch directly
+    fetch('https://formspree.io/f/<YOUR_ID>', {
+      method: 'POST',
+      body: new FormData(e.target as HTMLFormElement),
+    })
+    ```
+  </Card>
+  <Card title="EmailJS" icon="envelope">
+    Use the EmailJS SDK to send emails directly from the browser using a configured email service template.
+
+    ```bash
+    npm install @emailjs/browser
+    ```
+  </Card>
+  <Card title="Serverless Function" icon="server">
+    POST to a Next.js API route, Netlify Function, or Vercel Edge Function that calls a transactional email provider (SendGrid, Resend, etc.).
+
+    ```bash
+    # Example: /api/contact.ts on Vercel
+    # Receives { name, email, message }
+    # and calls Resend or SendGrid
+    ```
+  </Card>
+</CardGroup>
+
+In all cases, wrap the call in a `try/catch` block and handle the error state by resetting `status` to `'idle'` and showing an inline error message so the user knows the transmission failed.

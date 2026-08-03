@@ -1,0 +1,121 @@
+---
+title: "Projects Page (STAR_MAP): Interactive Draggable Project Map"
+sidebarTitle: "Projects"
+description: "The Projects page renders a draggable, zoomable star map canvas where each project is a glowing circle. Clicking a project slides open a detail panel with description, tech stack, and links."
+---
+
+The Projects page (`/projects`) replaces a traditional card grid with an **interactive star map** — a `200vw × 200vh` canvas that the visitor can drag freely in any direction. Each project appears as a glowing circle planet at a fixed percentage coordinate on the map. Clicking a planet slides open a detail panel from the right edge of the screen. The entire experience is contained inside a `calc(100vh - 8rem)` tall `overflow-hidden` container so the page never scrolls.
+
+## Star Map Canvas
+
+The draggable area is a Framer Motion `div` with `drag={true}` and `dragConstraints` bound to the parent `overflow-hidden` container via a `useRef`. Its natural size is `w-[200vw] h-[200vh]`, giving two full viewport-widths and viewport-heights of navigable space. A CSS `scale` transform is applied directly via the zoom state variable, shrinking or expanding the canvas while keeping it centered (`top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`). The cursor changes to `cursor-grab` normally and `active:cursor-grabbing` while dragging.
+
+### Grid Background
+
+The grid is rendered as a CSS `backgroundImage` applied to an absolutely-positioned `inset-0` child div:
+
+```css
+backgroundImage: "linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px)"
+backgroundSize: "50px 50px"
+```
+
+This produces a subtle cyan grid at **50px intervals** with **5% opacity**, evoking a navigation chart without distracting from the project nodes.
+
+## Zoom Controls
+
+A fixed panel in the top-left corner (`absolute top-4 left-4 z-20`) holds the zoom controls inside a `hud-border` container:
+
+| Button  | Action                                      |
+|---------|---------------------------------------------|
+| `+`     | Increase zoom by `0.25`                     |
+| `−`     | Decrease zoom by `0.25`                     |
+| Reset   | Set zoom back to `1.0`                      |
+
+Zoom is clamped to the range **0.5 – 2.0** using `Math.min(Math.max(newZoom, 0.5), 2)`. A live readout (`ZOOM: XX%`) is displayed below the buttons in `font-mono text-[10px] text-space-turquoise`.
+
+## Project Nodes
+
+Each project is rendered as an absolutely-positioned Framer Motion `div` at `left: x%`, `top: y%` within the map canvas. On hover the entire group scales to `1.1×` (`whileHover={{ scale: 1.1 }}`). The visual consists of three layers:
+
+1. **Ping ring** — An `absolute inset-0 rounded-full animate-ping-slow opacity-20` div styled in the project's `color`, scaled to `2×`. The `animate-ping-slow` keyframe runs the standard `ping` animation at a 3-second interval for a gentle pulse.
+2. **Solid circle** — A `relative rounded-full` div sized at `size × size` px with `backgroundColor: color` and `boxShadow: 0 0 ${size}px ${color}80` for a soft glow halo.
+3. **Name label** — A `font-mono text-xs` label in a `bg-space-navy/80 border border-space-white/10` pill, and a `font-mono text-[10px] text-space-turquoise` type label, both rendered below the circle and ignoring pointer events.
+
+## Detail Panel
+
+Clicking any project node sets it as the `selectedProject` state. An `AnimatePresence`-wrapped Framer Motion `div` slides in from the right:
+
+```jsx
+initial={{ x: "100%" }}
+animate={{ x: 0 }}
+exit={{ x: "100%" }}
+transition={{ type: "spring", damping: 25, stiffness: 200 }}
+```
+
+The panel is `w-full md:w-96`, absolutely positioned at `top-0 right-0 bottom-0`, with `bg-space-navy/95 backdrop-blur-xl` and a left border in `border-space-turquoise/30`. Its header shows a **TARGET ACQUIRED** label and a close (`×`) button.
+
+The panel body contains:
+
+- A `w-16 h-16 rounded-full` color swatch with a `0 0 20px ${color}40` glow
+- Project `name` in `font-serif text-3xl`
+- Project `type` in `font-mono text-sm text-space-turquoise`
+- A **DESCRIPTION** section label followed by `desc` in `text-space-white/80`
+- A **TECH STACK** section label followed by pill chips: `px-3 py-1 rounded-full border border-space-white/20 text-xs font-mono bg-space-white/5`
+- Two CTA buttons: **LAUNCH** (cyan hover) and **SOURCE** (white hover), both using the `hud-border` style
+
+## Projects Data
+
+```typescript
+interface Project {
+  id: string;
+  name: string;
+  type: string;
+  x: number;      // percentage position on the map (0-100)
+  y: number;      // percentage position on the map (0-100)
+  size: number;   // circle diameter in pixels
+  color: string;  // hex color for glow and fill
+  desc: string;
+  stack: string[];
+}
+```
+
+| Name              | Type            | Color     | Stack                              |
+|-------------------|-----------------|-----------|------------------------------------|
+| Nebula UI         | Design System   | `#22d3ee` | React, Tailwind, Storybook         |
+| Quasar Analytics  | Dashboard       | `#14b8a6` | TypeScript, D3.js, WebSockets      |
+| Pulsar API        | Backend Service | `#7c3aed` | Node.js, Redis, GraphQL            |
+| Void Explorer     | Web3 App        | `#f43f5e` | Next.js, Solidity, Ethers.js       |
+| Comms Relay       | Chat App        | `#eab308` | React Native, WebRTC, Firebase     |
+
+## Adding or Editing Projects
+
+<Steps>
+  <Step title="Locate the data array">
+    Find the `Zt` array in `assets/main.js` (search for `"Nebula UI"` to jump directly to it). Each object in the array represents one star on the map.
+  </Step>
+  <Step title="Add a new project">
+    Append a new object following the `Project` interface above. Choose `x` and `y` values (0–100) that don't overlap with existing nodes — check the existing coordinates in the table above. Use a `size` between `25` and `65` px for visual variety, and pick a hex `color` that contrasts with the `#020617` navy background.
+
+    ```javascript
+    {
+      id: '6',
+      name: 'Dark Matter DB',
+      type: 'Database Tool',
+      x: 55,
+      y: 45,
+      size: 38,
+      color: '#a855f7',
+      desc: 'A schema-less distributed store optimized for high-entropy data.',
+      stack: ['Rust', 'gRPC', 'FoundationDB']
+    }
+    ```
+  </Step>
+  <Step title="Wire up LAUNCH and SOURCE links">
+    The two CTA buttons currently use `href="#"`. Replace these with real URLs — e.g., a live deployment URL for LAUNCH and a GitHub repository URL for SOURCE. Each button is an `<a>` element inside the detail panel's flex footer.
+  </Step>
+</Steps>
+
+<Note>
+  Nodes placed near the edges of the canvas (x or y close to `0` or `100`) may be partially off-screen at the default centered view. Consider placing key projects in the `20–80` range so they're immediately discoverable without dragging.
+</Note>

@@ -1,0 +1,109 @@
+---
+title: "About Page (ORIGIN): Scroll-Driven Career Journey"
+sidebarTitle: "About"
+description: "The About page uses a 400vh scroll canvas with Framer Motion useScroll to animate three career milestone sections — Origin, Deep Space, and Current Orbit — each with a planet visual and stat grid."
+---
+
+The About page (`/about`) presents a career journey as a cinematic scroll experience. The root element is a `h-[400vh]` container — four times the viewport height — which provides the scroll distance needed to drive three distinct animation phases. A child `div` is `position: sticky; top: 0; height: 100vh`, so only one section is ever visible at a time while the browser scrolls through the outer container. Framer Motion's `useScroll` hook tracks `scrollYProgress` (a `MotionValue` between `0` and `1`) against the sticky container, and each career section maps a portion of that range to its own opacity, vertical translation, and scale transforms.
+
+## ALTITUDE Indicator
+
+A fixed left-sidebar element labeled **ALTITUDE** is visible on `md:` and larger screens. It consists of:
+
+- A rotated `font-mono` label reading `ALTITUDE`
+- A `1px` vertical track (`bg-space-white/20`)
+- A diamond-shaped indicator (`w-3 h-3 border border-space-turquoise bg-space-navy rotate-45`) whose `top` CSS property is driven by `useTransform(scrollYProgress, [0, 1], ["0%", "100%"])` — smoothly sliding from the top to the bottom of the track as the user scrolls through the full `400vh` canvas.
+
+## Career Journey Sections
+
+Each section is rendered by the internal `JourneySection` component, which accepts `title`, `subtitle`, `content`, `stats`, `planetColor`, `align`, `progress`, and `range` props. The `range` prop (`[start, end]` as fractions of `scrollYProgress`) controls when the section is visible. Sections cross-fade and overlap: the outgoing section fades from `opacity 1 → 0` while the incoming section fades from `0 → 1`, both driven by `useTransform`.
+
+Animation per section (`range = [start, end]`):
+
+| Property  | Input Range                           | Output Range      |
+|-----------|---------------------------------------|-------------------|
+| `y`       | `[start, end]`                        | `[200, -200]` px  |
+| `opacity` | `[start, midpoint, end]`              | `[0, 1, 0]`       |
+| `scale`   | `[start, midpoint, end]`              | `[0.8, 1, 0.8]`   |
+
+---
+
+### Sector 01 — Origin
+
+- **Range:** `[0, 0.33]`
+- **Alignment:** left
+- **Planet:** `bg-gradient-to-br from-slate-400 to-slate-700` (grey-to-charcoal)
+- **Content:** *"Began the journey writing basic scripts to automate mundane tasks. Discovered the vastness of the web development universe and never looked back. The early days were filled with syntax errors and stack overflow lifelines."*
+
+| Stat Label | Value            |
+|------------|------------------|
+| Apoapsis   | Junior Dev       |
+| Periapsis  | HTML/CSS         |
+| Fuel       | High Enthusiasm  |
+| Status     | Orbit Achieved   |
+
+---
+
+### Sector 02 — Deep Space
+
+- **Range:** `[0.33, 0.66]`
+- **Alignment:** right (uses `flex-row-reverse`)
+- **Planet:** `bg-gradient-to-br from-space-turquoise to-blue-900` (cyan-to-deep-blue)
+- **Content:** *"Navigated through complex architectural asteroid fields. Mastered React, conquered state management, and learned to communicate with backend APIs across the void. Built robust systems capable of withstanding high user gravity."*
+
+| Stat Label | Value          |
+|------------|----------------|
+| Apoapsis   | Mid-Level Eng  |
+| Periapsis  | React/TS       |
+| Velocity   | Agile Sprints  |
+| Status     | Cruising       |
+
+---
+
+### Sector 03 — Current Orbit
+
+- **Range:** `[0.66, 1]`
+- **Alignment:** left
+- **Planet:** `bg-gradient-to-br from-purple-500 to-indigo-900` (purple-to-indigo)
+- **Content:** *"Now leading expeditions into unknown technological territories. Architecting scalable frontends, mentoring junior cadets, and ensuring all systems remain nominal under heavy load. Still debugging, but with better tools."*
+
+| Stat Label | Value        |
+|------------|--------------|
+| Apoapsis   | Senior Eng   |
+| Periapsis  | Architecture |
+| Payload    | Mentorship   |
+| Status     | Commanding   |
+
+---
+
+## Planet Visual
+
+Each section's planet is a `w-32 h-32` (mobile) / `w-64 h-64` (desktop) `rounded-full` div styled with the `planetColor` gradient and an inset shadow (`shadow-[inset_-20px_-20px_40px_rgba(0,0,0,0.5)]`) that simulates depth. An absolutely-positioned ellipse — `w-[150%] h-[40%] border-2 border-space-white/20 rounded-[100%] rotate-12` — overlays the planet to suggest a tilted orbital ring.
+
+## Stat Grid
+
+Each section's stats are displayed in a `grid-cols-2 gap-4` grid below the content paragraph, separated by a `border-t border-space-white/10`. Each stat is a two-line stack:
+
+- Label in `font-mono text-[10px] text-space-white/50 uppercase`
+- Value in `font-mono text-xs text-space-turquoise`
+
+<Tip>
+  The stat labels are intentionally repurposed orbital-mechanics terms (Apoapsis, Periapsis, etc.) to reinforce the space theme. Feel free to substitute any two-word label/value pairs that suit your career narrative.
+</Tip>
+
+## Customization
+
+<Steps>
+  <Step title="Edit section content">
+    Each section's body copy is the `content` prop on the `JourneySection` (component `B`) call in `main.js`. Replace the string value with your own narrative. Keep it to 2–3 sentences for visual balance with the planet on smaller screens.
+  </Step>
+  <Step title="Edit stats">
+    Each section's `stats` prop is an array of `{ label, value }` objects. The grid always renders exactly four stats in a 2×2 layout. Add, remove, or relabel entries to match your actual career milestones — but keep the array length at 4 to avoid layout shifts.
+  </Step>
+  <Step title="Change a planet gradient">
+    Each section's `planetColor` prop is a Tailwind gradient string applied directly to the planet div's `className`. Replace it with any Tailwind `bg-gradient-to-br from-X to-Y` combination. For custom hex colors, use an inline `style` prop instead.
+  </Step>
+  <Step title="Add a fourth career section">
+    Duplicate a `JourneySection` call and assign a new `range` such as `[0.75, 1]`. Then increase the root container height from `h-[400vh]` to `h-[500vh]` and adjust the `range` fractions of all sections proportionally so they divide the new `0–1` scroll range evenly.
+  </Step>
+</Steps>

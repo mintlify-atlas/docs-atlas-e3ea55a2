@@ -1,0 +1,140 @@
+---
+title: "Skills Page (CONSTELLATIONS): Interactive SVG Skill Graph"
+sidebarTitle: "Skills"
+description: "The Skills page renders three named constellations as interactive SVG graphs — LYRA (Frontend), CYGNUS (Backend), and ORION (Tools) — with node size proportional to years of experience."
+---
+
+The Skills page (`/skills`) visualises technical proficiency as a star chart. Three **constellations** are drawn on a shared `hud-border` SVG canvas: **LYRA** for frontend technologies, **CYGNUS** for backend, and **ORION** for tools. Each constellation's nodes are placed at absolute percentage coordinates within the canvas, connected by animated SVG lines. Node diameter scales linearly with years of experience, making seniority visually intuitive at a glance. The entire canvas fills `calc(100vh - 8rem)` so all three constellations are visible simultaneously without scrolling.
+
+## Constellation Data
+
+### LYRA (Frontend) — `#22d3ee`
+
+| Node ID | Label      | Position (x%, y%) | Years |
+|---------|------------|-------------------|-------|
+| react   | React      | 20%, 30%          | 5     |
+| ts      | TypeScript | 35%, 20%          | 4     |
+| tw      | Tailwind   | 45%, 40%          | 3     |
+| next    | Next.js    | 25%, 50%          | 3     |
+
+**Connections:** react→ts, ts→tw, react→next, next→tw
+
+---
+
+### CYGNUS (Backend) — `#7c3aed`
+
+| Node ID | Label      | Position (x%, y%) | Years |
+|---------|------------|-------------------|-------|
+| node    | Node.js    | 70%, 30%          | 4     |
+| sql     | PostgreSQL | 85%, 40%          | 3     |
+| redis   | Redis      | 65%, 55%          | 2     |
+| gql     | GraphQL    | 80%, 65%          | 2     |
+
+**Connections:** node→sql, node→redis, sql→gql, redis→gql
+
+---
+
+### ORION (Tools) — `#14b8a6`
+
+| Node ID | Label  | Position (x%, y%) | Years |
+|---------|--------|-------------------|-------|
+| git     | Git    | 40%, 75%          | 6     |
+| docker  | Docker | 55%, 70%          | 3     |
+| aws     | AWS    | 50%, 85%          | 2     |
+
+**Connections:** git→docker, docker→aws
+
+---
+
+## Node Sizing
+
+Node diameter is calculated as `8 + years * 2` pixels. This gives a range from **12px** (1 year) to **20px** (6 years) at current data values:
+
+| Years | Diameter |
+|-------|----------|
+| 2     | 12px     |
+| 3     | 14px     |
+| 4     | 16px     |
+| 5     | 18px     |
+| 6     | 20px     |
+
+Each node is a white `rounded-full` div layered over a blurred, color-matched glow div (`blur-md`, same constellation `color`, same dimensions).
+
+## Interaction
+
+Hovering the **legend entry** (bottom-left of the canvas) for a constellation highlights that constellation at full opacity and dims all others to 30% opacity. Hovering a **node** simultaneously highlights its parent constellation AND reveals the node's label and MAGNITUDE tooltip:
+
+- Label: `font-mono text-xs text-space-white`
+- MAGNITUDE badge: `font-mono text-[10px] text-space-turquoise bg-space-navy/80 hud-border px-2 py-1 rounded` — displays `MAGNITUDE: N YRS`
+
+Both hover states are driven by two React state variables: `activeConstellation` (set to the hovered constellation `id`) and `activeNode` (set to the hovered node object). Both reset to `null` on mouse-leave.
+
+## SVG Connection Lines
+
+Constellation lines are rendered in a `pointer-events-none` `<svg>` element that overlays the entire canvas. Each line is a Framer Motion `<motion.line>` with:
+
+```jsx
+initial={{ pathLength: 0 }}
+animate={{ pathLength: 1 }}
+transition={{ duration: 1.5, delay: connectionIndex * 0.2 }}
+```
+
+When a constellation is active (hovered), its lines render at `strokeWidth={2}` and `strokeOpacity={0.6}`. When another constellation is active, lines dim to `strokeWidth={1}` and `strokeOpacity={0.1}`, providing clear visual separation between the three groupings.
+
+## Data Shapes
+
+```typescript
+interface SkillNode {
+  id: string;
+  label: string;
+  x: number;    // percentage (0-100)
+  y: number;    // percentage (0-100)
+  years: number;
+}
+
+interface Constellation {
+  id: string;
+  name: string;
+  color: string;           // hex color for lines, glow, and legend dot
+  nodes: SkillNode[];
+  connections: [string, string][]; // pairs of node IDs
+}
+```
+
+## Adding New Skills or Constellations
+
+<Steps>
+  <Step title="Add a node to an existing constellation">
+    Locate the target constellation object in the `_` array in `main.js` (search for `"LYRA"`, `"CYGNUS"`, or `"ORION"`). Append a new `SkillNode` object to the `nodes` array. Choose `x`/`y` values that don't collide with existing nodes in the same constellation. Then add connection pairs to the `connections` array to visually link the new node to its nearest neighbor(s).
+
+    ```javascript
+    // Example: adding Vitest to LYRA
+    { id: 'vitest', label: 'Vitest', x: 35, y: 45, years: 2 }
+    // Then add a connection:
+    ['tw', 'vitest']
+    ```
+  </Step>
+  <Step title="Add a new constellation">
+    Append a new object to the `_` array following the `Constellation` interface. Pick a hex `color` that is visually distinct from `#22d3ee`, `#7c3aed`, and `#14b8a6`. Place nodes in a region of the canvas not already occupied by the existing three constellations — LYRA occupies the top-left, CYGNUS the right, and ORION the bottom-center.
+
+    ```javascript
+    {
+      id: 'devops',
+      name: 'VEGA (DevOps)',
+      color: '#f59e0b',
+      nodes: [
+        { id: 'k8s',    label: 'Kubernetes', x: 15, y: 65, years: 2 },
+        { id: 'tf',     label: 'Terraform',  x: 30, y: 70, years: 1 },
+      ],
+      connections: [['k8s', 'tf']]
+    }
+    ```
+  </Step>
+  <Step title="Update the legend">
+    The legend is auto-generated by mapping over the `_` array, so any new constellation will automatically appear in the bottom-left legend with its `color` dot and `name`.
+  </Step>
+</Steps>
+
+<Note>
+  Keep `x` and `y` values for different constellations well separated (at least 15–20 percentage points apart) to prevent visual overlap and ensure the hover-isolation effect works clearly.
+</Note>
