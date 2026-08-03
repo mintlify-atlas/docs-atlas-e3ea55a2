@@ -1,7 +1,7 @@
 ---
 title: "Personalizing Space Mission: Editing Content Data Arrays"
 sidebarTitle: "Content Data"
-description: "All portfolio content in Space Mission — projects, skills, work history, case studies, blog posts, and testimonials — lives in plain JavaScript arrays. Learn how to edit each one."
+description: "Every project, skill, work entry, case study, blog post, and testimonial in Space Mission lives in a TypeScript array. Edit the data file and rebuild."
 ---
 
 All of Space Mission's portfolio content is defined as plain TypeScript/JavaScript arrays inside the source files. There is no CMS, no database, and no external API — every project card, skill node, work history entry, and testimonial is a literal object in the source code. When you run `npm run build`, Vite compiles those arrays into `assets/main.js`, which is what the deployed site actually serves. To change any content, you edit the source TypeScript files and rebuild.

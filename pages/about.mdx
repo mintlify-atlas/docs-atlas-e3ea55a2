@@ -1,7 +1,7 @@
 ---
-title: "About Page (ORIGIN): Scroll-Driven Career Journey"
+title: "About Page (ORIGIN): Scroll-Driven Career Timeline"
 sidebarTitle: "About"
-description: "The About page uses a 400vh scroll canvas with Framer Motion useScroll to animate three career milestone sections — Origin, Deep Space, and Current Orbit — each with a planet visual and stat grid."
+description: "Three career milestones — Origin, Deep Space, and Current Orbit — scroll into view on a 400vh canvas, each paired with a planet visual and a HUD stat grid."
 ---
 
 The About page (`/about`) presents a career journey as a cinematic scroll experience. The root element is a `h-[400vh]` container — four times the viewport height — which provides the scroll distance needed to drive three distinct animation phases. A child `div` is `position: sticky; top: 0; height: 100vh`, so only one section is ever visible at a time while the browser scrolls through the outer container. Framer Motion's `useScroll` hook tracks `scrollYProgress` (a `MotionValue` between `0` and `1`) against the sticky container, and each career section maps a portion of that range to its own opacity, vertical translation, and scale transforms.

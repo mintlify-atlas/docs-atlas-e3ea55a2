@@ -1,7 +1,7 @@
 ---
 title: "PageTransition Component: Framer Motion Page Wrapper"
 sidebarTitle: "PageTransition"
-description: "PageTransition wraps every page in a Framer Motion animation that fades and slides content in on enter and out on exit, coordinated by AnimatePresence in the router."
+description: "Framer Motion wrapper that gives every page a blur-scale fade in and out, coordinated by AnimatePresence for seamless route-change transitions."
 ---
 
 The `PageTransition` component is a thin but essential wrapper that gives every page in Space Mission a consistent animated entrance and exit. It takes a single `children` prop and places its contents inside a Framer Motion `motion.div` configured with enter and exit variants — including a `blur` effect that gives the transition a cinematic, defocused quality. All the transition logic lives in one place, so changing the animation once updates every page simultaneously.

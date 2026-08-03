@@ -1,7 +1,7 @@
 ---
 title: "Starfield Component: Animated Full-Viewport Star Background"
 sidebarTitle: "Starfield"
-description: "The Starfield component renders a fixed full-viewport animated background of stars with varying sizes and opacities, sitting behind all page content without intercepting pointer events."
+description: "Fixed full-viewport star background with three parallax CSS div layers, mouse-tracking spring motion, and looping shooting-star streak animations."
 ---
 
 The `Starfield` component paints the deep-space backdrop that persists across every page of Space Mission. It renders three separate layers of CSS `div`-based stars — each layer a randomly seeded scatter of dots — plus animated shooting-star streaks, all inside a `fixed` full-viewport container that lives permanently behind all content. Because it never participates in the page's document flow and never captures input events, it is completely transparent to the rest of the application.

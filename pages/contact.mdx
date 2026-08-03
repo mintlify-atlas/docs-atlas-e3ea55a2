@@ -1,7 +1,7 @@
 ---
 title: "Contact Page (COMMS): Open Channel Form and Relay Links"
 sidebarTitle: "Contact"
-description: "The Contact page features a space-themed transmission form with scanline overlay, field labels as radio callsigns, an animated send state, and social relay station links for email, GitHub, and LinkedIn."
+description: "Space-themed contact form with scanline overlay, three send states (idle, sending, sent), and relay station links for email, GitHub, and LinkedIn."
 ---
 
 The **Contact** page — labelled `COMMS` in the HUD — simulates an open radio channel between the visitor and mission control. Rather than a plain web form, the interface dresses each field as a transmission parameter: the sender's name becomes an identification callsign, the reply address becomes a return frequency, and the message body becomes the payload. A CRT scanline overlay adds a retro-terminal texture to the entire form panel, and a multi-state send animation turns form submission into a miniature launch sequence.
@@ -25,7 +25,7 @@ All three fields are required. They use a monospace font and render on a dark na
 |---|---|---|---|
 | `IDENTIFICATION` | `name` | `text` | Sender's full name |
 | `RETURN FREQUENCY` | `email` | `email` | Reply-to email address |
-| `PAYLOAD` | `message` | `textarea` | Message body |
+| `PAYLOAD` | `message` | `textarea` (5 rows) | Message body |
 
 ```jsx
 <label className="font-mono text-cyan-400 text-xs tracking-widest">
@@ -83,52 +83,53 @@ The right column lists three direct-contact shortcuts styled as named relay stat
 
 | Station | Icon | Link |
 |---|---|---|
-| **Email Relay** | `Mail` (Lucide React) | `mailto:` address |
-| **GitHub Beacon** | `Github` (Lucide React) | GitHub profile URL |
-| **LinkedIn Array** | `Linkedin` (Lucide React) | LinkedIn profile URL |
+| **Email Relay** | `Mail` (Lucide React) | `"#"` placeholder |
+| **GitHub Beacon** | `Github` (Lucide React) | `"#"` placeholder |
+| **LinkedIn Array** | `Linkedin` (Lucide React) | `"#"` placeholder |
 
 Each relay station card shares the same HUD border styling as the rest of the portfolio and opens its link in a new tab (`target="_blank" rel="noopener noreferrer"`).
 
+<Warning>
+  All three relay station `href` values are currently `"#"` in the source. They will not navigate anywhere until you replace them with real URLs. See [Updating Contact Link URLs](#updating-contact-link-urls) below.
+</Warning>
+
 ## Scanline Overlay
 
-The form panel carries a full-coverage CRT scanline effect implemented entirely in CSS. A pseudo-element (or an absolutely positioned `<div>` with `pointer-events: none`) is layered over the form using the following gradient:
+The form panel carries a full-coverage CRT scanline effect implemented entirely in CSS. An absolutely positioned `<div>` with `pointer-events: none` is layered over the form using Tailwind utility classes that compose the scanline gradient directly:
 
-```css
-.scanline-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    transparent 50%,
-    rgba(0, 0, 0, 0.25) 50%
-  );
-  background-size: 100% 4px;   /* each scanline is 4 px tall */
-  z-index: 10;
-}
+```jsx
+<div
+  className="
+    absolute inset-0 pointer-events-none
+    bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.25)_50%)]
+    bg-[length:100%_4px]
+  "
+/>
 ```
 
-The `background-size: 100% 4px` causes the gradient to repeat every 4 pixels, creating evenly spaced horizontal bands. The overlay does not interfere with form interaction because `pointer-events: none` lets all mouse and keyboard events pass through to the underlying inputs.
+The `bg-[length:100%_4px]` class causes the gradient to repeat every 4 pixels, creating evenly spaced horizontal bands. The overlay does not interfere with form interaction because `pointer-events: none` lets all mouse and keyboard events pass through to the underlying inputs.
 
 ## Updating Contact Link URLs
 
-The relay station links are hardcoded values in the `Contact` page component. To update them, locate the relay stations data array near the top of the file and edit the `href` fields:
+The relay station links are hardcoded in the `Contact` page component. In the current source all three `href` values are set to `"#"` — they are intentional placeholders and must be replaced before the portfolio goes live. Locate the relay stations data array near the top of the component file and update each `href`:
 
 ```typescript
+// Current source — all hrefs are "#" placeholders
 const relayStations = [
   {
     label: 'Email Relay',
     icon: Mail,
-    href: 'mailto:your-email@example.com',   // ← update this
+    href: '#',   // ← replace with 'mailto:your@email.com'
   },
   {
     label: 'GitHub Beacon',
     icon: Github,
-    href: 'https://github.com/your-handle',  // ← update this
+    href: '#',   // ← replace with 'https://github.com/your-handle'
   },
   {
     label: 'LinkedIn Array',
     icon: Linkedin,
-    href: 'https://linkedin.com/in/your-profile', // ← update this
+    href: '#',   // ← replace with 'https://linkedin.com/in/your-profile'
   },
 ];
 ```

@@ -1,10 +1,10 @@
 ---
 title: "OrbitSystem Component: Interactive Home Page Hero"
 sidebarTitle: "OrbitSystem"
-description: "The OrbitSystem component renders an animated interactive orbital diagram on the home page, with clickable planets that reveal information panels — built with SVG and Framer Motion."
+description: "Animated orbital hero for the home page: a glowing central star with five CSS div planets on elliptical paths, each clicking through to a portfolio route."
 ---
 
-The `OrbitSystem` component is the centrepiece hero of the Space Mission home page. It renders a miniature solar-system diagram: a glowing central star (labelled `DEV / SYS_CORE`) surrounded by five planets — one for each major section of the portfolio — orbiting along elliptical paths. Clicking any planet navigates directly to its corresponding route, making the diagram an animated, spatial navigation aid as well as a visual showpiece.
+The `OrbitSystem` component is the centrepiece hero of the Space Mission home page. It renders a miniature solar-system diagram: a glowing central star (labelled `DEV / SYS_CORE`) surrounded by five planets — one for each major section of the portfolio — orbiting along elliptical paths. The entire diagram is built from CSS `div` elements styled with Tailwind and animated with Framer Motion; no SVG is used. Clicking any planet navigates directly to its corresponding route, making the diagram an animated, spatial navigation aid as well as a visual showpiece.
 
 ## Layout
 
@@ -83,7 +83,7 @@ The five planets and their orbital parameters are:
 | `work` | `LOGS` | `/work` | 320 | 160 | `bg-indigo-400` | 60 s |
 | `contact` | `COMMS` | `/contact` | 400 | 200 | `bg-rose-400` | 80 s |
 
-Each orbit is rendered as a CSS ellipse (a `border border-space-white/10 rounded-full` div) plus a Framer Motion rotating wrapper that carries the planet dot.
+Each orbit path is rendered as a plain `div` sized to `radiusX * 2` by `radiusY * 2` with `border border-space-white/10 rounded-full`, giving it an elliptical ring appearance. A Framer Motion rotating wrapper carries the planet dot around that ring.
 
 ## Animation Technique
 

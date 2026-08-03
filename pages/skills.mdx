@@ -1,7 +1,7 @@
 ---
 title: "Skills Page (CONSTELLATIONS): Interactive SVG Skill Graph"
 sidebarTitle: "Skills"
-description: "The Skills page renders three named constellations as interactive SVG graphs — LYRA (Frontend), CYGNUS (Backend), and ORION (Tools) — with node size proportional to years of experience."
+description: "LYRA, CYGNUS, and ORION skill constellations drawn as interactive SVG graphs on a single canvas. Node diameter scales linearly with years of experience."
 ---
 
 The Skills page (`/skills`) visualises technical proficiency as a star chart. Three **constellations** are drawn on a shared `hud-border` SVG canvas: **LYRA** for frontend technologies, **CYGNUS** for backend, and **ORION** for tools. Each constellation's nodes are placed at absolute percentage coordinates within the canvas, connected by animated SVG lines. Node diameter scales linearly with years of experience, making seniority visually intuitive at a glance. The entire canvas fills `calc(100vh - 8rem)` so all three constellations are visible simultaneously without scrolling.

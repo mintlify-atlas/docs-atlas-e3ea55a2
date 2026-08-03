@@ -1,7 +1,7 @@
 ---
 title: "Typography: Space Mono, Fraunces, and Inter in Space Mission"
 sidebarTitle: "Typography"
-description: "Space Mission uses three Google Fonts: Space Mono for code and labels, Fraunces for headings, and Inter for body text, each with specific Tailwind utility classes."
+description: "Space Mission loads Space Mono, Fraunces, and Inter from Google Fonts. Each font maps to a Tailwind font utility and can be swapped by editing two files."
 ---
 
 Space Mission's typographic system pairs three Google Fonts to create the layered feel of a sci-fi interface. **Inter** provides the clean, neutral backbone for body text and descriptions. **Fraunces** — a variable serif with wide optical sizing — lends an unexpected, editorial weight to every heading. **Space Mono** reinforces the technology theme across HUD labels, navigation links, form fields, and any inline code, with its fixed-width characters echoing terminal readouts and cockpit displays. Each typeface maps to a Tailwind `font-*` utility, making the system easy to apply and easy to change.
@@ -16,7 +16,7 @@ Space Mission's typographic system pairs three Google Fonts to create the layere
 
 ## Google Fonts Import
 
-Both fonts are loaded via a single `@import` at the very top of `assets/main.css`, before Tailwind's own directives. This ensures the fonts are available as soon as the stylesheet parses.
+All three fonts are loaded via a single `@import` at the very top of `assets/main.css`, before Tailwind's own directives. This ensures the fonts are available as soon as the stylesheet parses.
 
 ```css
 @import "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter:wght@100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap";
@@ -48,7 +48,7 @@ h1, h2, h3, h4, h5, h6 {
 A few things stand out here:
 
 - **`font-weight: 400`** — Fraunces at regular weight already carries considerable visual mass due to its optical-size axis and high-contrast thick/thin strokes. Using 400 rather than 700 keeps headings sophisticated rather than heavy.
-- **`letter-spacing: 0.025em`** — A small positive tracking (`tracking-tight` in Tailwind vocabulary) provides a touch of air between glyphs, reinforcing the editorial character of the typeface at display sizes.
+- **`letter-spacing: 0.025em`** — A small positive tracking (`tracking-wide` in Tailwind vocabulary) provides a touch of air between glyphs, reinforcing the editorial character of the typeface at display sizes.
 - The `font-serif` utility class (`font-family: Fraunces, serif`) can also be applied manually to any element that needs the Fraunces treatment outside of semantic heading tags.
 
 ## Monospace Usage Examples

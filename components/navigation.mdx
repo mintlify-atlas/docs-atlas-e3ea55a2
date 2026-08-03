@@ -1,16 +1,16 @@
 ---
 title: "Navigation Component: Space Mission's HUD Nav Bar"
 sidebarTitle: "Navigation"
-description: "The Navigation component is a fixed HUD-style header with a status display, animated desktop nav links, an active indicator spring animation, and a mobile slide-out drawer."
+description: "Fixed HUD-style header with a pulsing status panel, spring-animated active link indicator, and a Framer Motion mobile drawer with crosshair nav links."
 ---
 
-The `Navigation` component is the persistent top-of-screen header in Space Mission. It sits in a `fixed` position with `z-50` so it always floats above every page, the starfield background, and any animated content. On desktop it presents a horizontal HUD control panel — status readout on the left, nine nav links across the center/right — while on mobile it collapses to a hamburger button that opens a Framer Motion slide-down drawer.
+The `Navigation` component is the persistent top-of-screen header in Space Mission. It sits in a `fixed` position with `z-50` so it always floats above every page, the starfield background, and any animated content. On desktop it presents a horizontal HUD control panel — status readout on the left, nine nav links across the center/right — while on mobile it collapses to a hamburger button that opens a Framer Motion animated drawer.
 
 ## Desktop Layout
 
 The bar is divided into two visible regions on wide screens:
 
-**Left — HUD Status Panel.** A small pulsing beacon dot (animated with CSS or Framer Motion) sits next to the text `NAV_SYS_ONLINE`, with the current `window.location.pathname` rendered beneath it in a monospace font. This panel is purely informational and gives the UI its mission-control feel.
+**Left — HUD Status Panel.** A two-ring pulsing beacon (the inner dot using `animate-pulse`, the outer ring using `animate-ping-slow`) sits next to the text `NAV_SYS_ONLINE`, with the current `useLocation().pathname` rendered beneath it in a monospace font. This panel is purely informational and gives the UI its mission-control feel.
 
 **Center/Right — Nav Links.** Nine `<NavLink>` elements from React Router are spread horizontally. React Router's `NavLink` automatically receives an `isActive` prop that the component uses to apply active styling and trigger the Framer Motion underline indicator.
 
@@ -20,11 +20,14 @@ import { NavLink, useLocation } from 'react-router-dom';
 // Status panel example
 const { pathname } = useLocation();
 
-<div className="flex items-center gap-2 font-mono text-xs text-space-teal">
-  <span className="w-2 h-2 rounded-full bg-space-teal animate-pulse" />
-  <div>
-    <div>NAV_SYS_ONLINE</div>
-    <div className="text-space-white/60">{pathname}</div>
+<div className="flex items-center gap-3 font-mono text-xs text-space-turquoise">
+  <div className="relative flex items-center justify-center w-4 h-4">
+    <div className="absolute w-2 h-2 bg-space-turquoise rounded-full animate-pulse" />
+    <div className="absolute w-4 h-4 border border-space-turquoise rounded-full animate-ping-slow opacity-50" />
+  </div>
+  <div className="flex flex-col">
+    <span className="tracking-widest">NAV_SYS_ONLINE</span>
+    <span className="text-space-white/50">{pathname}</span>
   </div>
 </div>
 ```
@@ -54,18 +57,20 @@ import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
 
 {routes.map(({ path, label }) => (
-  <NavLink key={path} to={path}>
+  <NavLink key={path} to={path} className="relative px-4 py-2 font-mono text-xs tracking-wider overflow-hidden group">
     {({ isActive }) => (
-      <span className="relative px-3 py-1 font-mono text-xs">
+      <>
+        <span className={`relative z-10 ${isActive ? 'text-space-navy font-bold' : 'text-space-white/70 group-hover:text-space-turquoise'}`}>
+          {label}
+        </span>
         {isActive && (
-          <motion.span
+          <motion.div
             layoutId="nav-active"
-            className="absolute inset-0 rounded bg-space-teal/20 border border-space-teal/40"
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            className="absolute inset-0 bg-space-turquoise z-0"
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
         )}
-        <span className="relative z-10">{label}</span>
-      </span>
+      </>
     )}
   </NavLink>
 ))}
@@ -77,36 +82,46 @@ import { NavLink } from 'react-router-dom';
 
 ## Mobile Navigation
 
-On small viewports the center links are hidden and a hamburger `Menu` icon appears on the right side of the bar. Tapping it toggles a Framer Motion animated drawer that slides down from below the header. Each route item in the drawer is prefixed with a crosshair icon and closes the drawer automatically when tapped.
+On small viewports the center links are hidden (`hidden md:flex`) and a hamburger `Menu` icon button appears on the right side of the bar (`md:hidden`). Tapping it toggles a Framer Motion `motion.div` drawer that animates in from above. Each route item in the drawer is prefixed with a crosshair icon and closes the drawer automatically when tapped.
 
 ```jsx
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Menu, X, Crosshair } from 'lucide-react';
 
-// Drawer
-<AnimatePresence>
-  {isOpen && (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="absolute top-full left-0 w-full bg-space-navy/95 border-b border-space-teal/20"
-    >
-      {routes.map(({ path, label }) => (
-        <NavLink key={path} to={path} onClick={() => setIsOpen(false)}>
-          <div className="flex items-center gap-3 px-6 py-4 font-mono text-sm">
-            <Crosshair className="w-4 h-4 text-space-teal" />
-            {label}
-          </div>
-        </NavLink>
-      ))}
-    </motion.div>
-  )}
-</AnimatePresence>
+// Hamburger toggle button (md:hidden)
+<button
+  className="md:hidden hud-border p-2 rounded-sm text-space-turquoise"
+  onClick={() => setIsOpen(!isOpen)}
+>
+  {isOpen ? <X size={20} /> : <Menu size={20} />}
+</button>
+
+// Drawer — conditionally rendered, animates in with motion.div
+{isOpen && (
+  <motion.div
+    initial={{ opacity: 0, y: -20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="md:hidden absolute top-16 left-4 right-4 hud-border rounded-sm p-4 flex flex-col gap-2 pointer-events-auto"
+  >
+    {routes.map(({ path, label }) => (
+      <NavLink key={path} to={path} onClick={() => setIsOpen(false)}
+        className={({ isActive }) =>
+          `font-mono text-sm p-3 border border-transparent flex items-center gap-3
+           ${isActive
+             ? 'bg-space-turquoise/10 border-space-turquoise text-space-turquoise'
+             : 'text-space-white/70 hover:bg-space-white/5 hover:border-space-white/20'}`
+        }
+      >
+        <Crosshair size={14} className="opacity-50" />
+        {label}
+      </NavLink>
+    ))}
+  </motion.div>
+)}
 ```
 
 <Tip>
-The drawer closes when any link is clicked because the `onClick` callback calls `setIsOpen(false)`. If you add a new route you do not need to wire this up separately — it inherits the same handler from the `routes.map`.
+The drawer closes when any link is clicked because the `onClick` callback calls `setIsOpen(false)`. If you add a new route you do not need to wire this up separately — it inherits the same handler from the `routes.map`. Note that the drawer uses a plain conditional render rather than `AnimatePresence`, so there is no exit animation when it closes.
 </Tip>
 
 ## Adding a New Nav Item
@@ -172,7 +187,7 @@ import AwardsPage from './pages/Awards';
 **Adjusting the spring.** The `layoutId='nav-active'` indicator uses a spring transition. Tune `stiffness` and `damping` to control how snappy or floaty the slide feels:
 
 ```jsx
-transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+transition={{ type: 'spring', stiffness: 300, damping: 30 }}
 // Snappier:  stiffness: 600, damping: 40
 // Floatier:  stiffness: 120, damping: 15
 ```

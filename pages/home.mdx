@@ -1,7 +1,7 @@
 ---
 title: "Home Page (SYS_CORE): Orbit System and Mission Briefing"
 sidebarTitle: "Home"
-description: "The Space Mission home page features an interactive OrbitSystem diagram, a typewriter mission briefing panel, and the animated starfield backdrop. Learn what's rendered and how to customize it."
+description: "The Space Mission home page renders an interactive OrbitSystem diagram, a typewriter mission briefing panel, and an animated starfield backdrop."
 ---
 
 The Home page (`/`) is the primary entry point of the Space Mission portfolio. It renders two stacked sections inside a single viewport: an interactive `OrbitSystem` SVG diagram in the upper half, and a HUD-styled **Mission Briefing** panel below it. The animated `Starfield` backdrop — complete with parallax stars and shooting-star comets — covers the entire screen as a fixed `z-0` layer behind all content. Both sections enter the view with a Framer Motion `whileInView` fade-in/slide-up animation (`initial={{ opacity: 0, y: 50 }}`).
@@ -60,8 +60,8 @@ The 7-second delay on the final line is intentional — it gives the visitor tim
 // delay — milliseconds before typing begins (default: 0)
 <TypingText text="> INITIALIZING TELEMETRY... SUCCESS." delay={500} />
 <TypingText text="> SUBJECT: Senior Software Engineer / Navigator of Code." delay={1500} />
-<TypingText text="> STATUS: All systems nominal. Caffeine levels stable." delay={3000} />
-<TypingText text="> DIRECTIVE: Explore the star map above..." delay={7000} />
+<TypingText text="> STATUS: All systems nominal. Caffeine levels stable. Currently orbiting the React/TypeScript sector with occasional deep-space probes into backend nebulae." delay={3000} />
+<TypingText text="> DIRECTIVE: Explore the star map above to access mission logs, orbital parameters, and archived transmissions." delay={7000} />
 ```
 
 <Note>

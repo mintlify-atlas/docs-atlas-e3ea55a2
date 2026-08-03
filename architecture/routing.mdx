@@ -56,17 +56,17 @@ function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/"                  element={<Home />} />
-        <Route path="/about"             element={<About />} />
-        <Route path="/projects"          element={<Projects />} />
-        <Route path="/skills"            element={<Skills />} />
-        <Route path="/work"              element={<Work />} />
-        <Route path="/case-studies"      element={<CaseStudies />} />
+        <Route path="/"                   element={<Home />} />
+        <Route path="/about"              element={<About />} />
+        <Route path="/projects"           element={<Projects />} />
+        <Route path="/skills"             element={<Skills />} />
+        <Route path="/work"               element={<Work />} />
+        <Route path="/case-studies"       element={<CaseStudies />} />
         <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
-        <Route path="/blog"              element={<Blog />} />
-        <Route path="/blog/:slug"        element={<BlogDetail />} />
-        <Route path="/contact"           element={<Contact />} />
-        <Route path="/testimonials"      element={<Testimonials />} />
+        <Route path="/blog"               element={<Blog />} />
+        <Route path="/blog/:slug"         element={<BlogDetail />} />
+        <Route path="/testimonials"       element={<Testimonials />} />
+        <Route path="/contact"            element={<Contact />} />
       </Routes>
     </AnimatePresence>
   );
@@ -104,12 +104,17 @@ Each shell does two things:
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About | space-mission</title>
 
     <script type="module" crossorigin src="../assets/main.js"></script>
     <link rel="modulepreload" crossorigin href="../assets/proxy.js">
     <link rel="modulepreload" crossorigin href="../assets/index.js">
+    <link rel="modulepreload" crossorigin href="./components/Navigation.js">
+    <link rel="modulepreload" crossorigin href="./components/Starfield.js">
+    <link rel="modulepreload" crossorigin href="./components/PageTransition.js">
+    <link rel="modulepreload" crossorigin href="./components/OrbitSystem.js">
     <link rel="stylesheet" crossorigin href="../assets/main.css">
 
     <script>
@@ -184,10 +189,16 @@ Copy any existing shell from `pages/` and update the title, `window.__STATIC_PAG
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Crew | space-mission</title>
     <script type="module" crossorigin src="../assets/main.js"></script>
     <link rel="modulepreload" crossorigin href="../assets/proxy.js">
     <link rel="modulepreload" crossorigin href="../assets/index.js">
+    <link rel="modulepreload" crossorigin href="./components/Navigation.js">
+    <link rel="modulepreload" crossorigin href="./components/Starfield.js">
+    <link rel="modulepreload" crossorigin href="./components/PageTransition.js">
+    <link rel="modulepreload" crossorigin href="./components/OrbitSystem.js">
     <link rel="stylesheet" crossorigin href="../assets/main.css">
     <script>
       window.__STATIC_PAGE_ROUTE__ = "/crew";

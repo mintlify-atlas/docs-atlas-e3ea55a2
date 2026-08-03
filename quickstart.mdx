@@ -1,10 +1,14 @@
 ---
 title: "Get Started with Space Mission in 5 Minutes"
 sidebarTitle: "Quickstart"
-description: "Clone the Space Mission portfolio, install dependencies with npm, start the Vite dev server, and open it in your browser — all in under five minutes."
+description: "Clone Space Mission, serve it as a static site or run the Vite dev server from source, and deploy to GitHub Pages — all in under five minutes."
 ---
 
 By the end of this guide you will have a fully running local copy of the Space Mission portfolio displaying in your browser, understand how to build it for production, and know how to preview the production build before deploying. The whole process — from cloning to a live dev server — takes under five minutes on a modern machine.
+
+<Warning>
+  The GitHub repository at `https://github.com/apursley2012/space-mission` contains the **pre-built static output** that is deployed directly to GitHub Pages. It does not include a `package.json`, `vite.config`, or `src/` directory. Steps 2–6 below (install, dev server, build, preview) apply when you have the **original Vite source project**. If you only cloned the deployed repo, skip to the static serving note after Step 1.
+</Warning>
 
 ## Prerequisites
 
@@ -27,7 +31,14 @@ By the end of this guide you will have a fully running local copy of the Space M
     cd space-mission
     ```
 
-    This downloads the full project — including the pre-built assets, component modules, and static HTML shells — into a new `space-mission/` directory and moves you into it.
+    This downloads the pre-built static site — `index.html`, `assets/`, `components/`, and `pages/` — into a new `space-mission/` directory. Because this repo **is** the compiled output, you can open `index.html` directly in a browser or serve the folder with any static file server right away:
+
+    ```bash
+    # Quick static preview without npm (requires npx / Node installed)
+    npx serve .
+    ```
+
+    To run the Vite development server with hot-module replacement, you need the original source project (not this repo). The remaining steps assume you are working from a source copy that includes `package.json` and `src/`.
   </Step>
 
   <Step title="Install dependencies">
@@ -78,13 +89,13 @@ By the end of this guide you will have a fully running local copy of the Space M
   </Step>
 
   <Step title="Build for production">
-    When you are ready to deploy, generate an optimised production build:
+    When you are ready to deploy, generate an optimised production build from the source project:
 
     ```bash
     npm run build
     ```
 
-    Vite bundles and minifies all JavaScript, processes Tailwind CSS with PurgeCSS tree-shaking, and outputs the compiled static site into the `dist/` directory. The build typically completes in under 15 seconds.
+    Vite bundles and minifies all JavaScript, processes Tailwind CSS with PurgeCSS tree-shaking, and outputs the compiled static site into the `dist/` directory. The build typically completes in under 15 seconds. The resulting `dist/` layout mirrors what is already deployed in the GitHub Pages repo:
 
     ```
     dist/
@@ -96,6 +107,10 @@ By the end of this guide you will have a fully running local copy of the Space M
     └── pages/
         └── ...
     ```
+
+    <Note>
+      The `space-mission` GitHub Pages repository **is** this built output — the source project's `dist/` contents are committed directly to the `main` branch for zero-configuration static hosting.
+    </Note>
   </Step>
 
   <Step title="Preview the production build">
